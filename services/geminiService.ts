@@ -1,19 +1,20 @@
 import { GoogleGenAI } from "@google/genai";
 import { Booking, Task } from "../types";
 
-// Initialize the Gemini API client
-// Note: process.env.API_KEY is assumed to be injected at build time.
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
-
 export const generateInsight = async (
   context: string, 
   data: Booking[] | Task[]
 ): Promise<string> => {
-  if (!process.env.API_KEY) {
-    return "Simulation Mode: Gemini API Key not configured. Please add your API key to the environment variables to enable AI features. (Simulated response: Data looks healthy, occupancy is stable.)";
+  // Access the key at runtime to ensure it's available
+  const apiKey = process.env.API_KEY;
+
+  if (!apiKey) {
+    return "Simulation Mode: Gemini API Key not configured. (Simulated response: Data looks healthy, occupancy is stable.)";
   }
 
   try {
+    // Initialize client inside the function scope for safety
+    const ai = new GoogleGenAI({ apiKey });
     const modelId = 'gemini-2.5-flash';
     const prompt = `
       You are an AI assistant for a Property Management CRM called Lodgex.
@@ -26,13 +27,16 @@ export const generateInsight = async (
 
     const response = await ai.models.generateContent({
       model: modelId,
-      contents: prompt,
+      contents: {
+        parts: [{ text: prompt }]
+      }
     });
 
     return response.text || "No insight generated.";
-  } catch (error) {
+  } catch (error: any) {
     console.error("Gemini API Error:", error);
-    return "Unable to generate AI insights at this time. Please try again later.";
+    // Return the specific error message to the UI to aid debugging
+    return `AI Service Error: ${error.message || error.toString() || "Unknown error"}. Please verify your API key and permissions.`;
   }
 };
 
@@ -40,11 +44,14 @@ export const draftGuestEmail = async (
   guestName: string, 
   type: 'check-in' | 'review-request'
 ): Promise<string> => {
-  if (!process.env.API_KEY) {
+  const apiKey = process.env.API_KEY;
+
+  if (!apiKey) {
     return `Simulation Mode: Dear ${guestName}, this is a simulated ${type} email because the API Key is missing.`;
   }
 
   try {
+    const ai = new GoogleGenAI({ apiKey });
     const prompt = `
       Draft a polite, professional, and warm ${type} email for a guest named ${guestName}.
       Keep it under 100 words. Do not include subject line.
@@ -52,12 +59,14 @@ export const draftGuestEmail = async (
 
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
-      contents: prompt,
+      contents: {
+        parts: [{ text: prompt }]
+      },
     });
 
     return response.text || "Could not draft email.";
-  } catch (error) {
+  } catch (error: any) {
     console.error("Gemini API Error:", error);
-    return "Error generating draft.";
+    return `Error generating draft: ${error.message || "Service unavailable"}`;
   }
 };

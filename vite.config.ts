@@ -8,5 +8,6 @@ export default defineConfig({
   },
   define: {
     'process.env.API_KEY': JSON.stringify("AIzaSyD5YJdiFVg-uNE5Jdsc7pNYRygWH1Gy34Q"),
+    'process.env.REACT_APP_API_URL': JSON.stringify("http://localhost:3001/api"),
   },
 });

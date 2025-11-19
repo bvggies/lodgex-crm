@@ -1,6 +1,7 @@
 import { Booking, FinanceRecord, Property, Task, Guest, StaffMember, Owner, AuditLogEntry } from "../types";
 
-// Points to the Node/Express backend
+// Use the injected variable directly. Vite replaces 'process.env.REACT_APP_API_URL' with the string.
+// We add a fallback string just in case the define plugin misses it in some environments.
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
 const handleResponse = async (response: Response) => {
