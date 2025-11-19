@@ -4,7 +4,7 @@ import { useData } from '../DataContext';
 import { 
   Mail, Phone, Shield, Briefcase, MoreVertical, Plus, X, Save, 
   Trash2, CheckCircle, Clock, AlertCircle, Calendar, FileText, 
-  Download, Upload, User, Filter, Search, Check
+  Download, Upload, User, Filter, Search, Check, Flag
 } from 'lucide-react';
 import { StaffMember, Task, TaskStatus, StaffDocument } from '../types';
 import { storageService } from '../services/storageService';
@@ -17,8 +17,6 @@ const Staff: React.FC = () => {
   
   // Profile Modal State
   const [activeTab, setActiveTab] = useState<'overview' | 'tasks' | 'documents'>('overview');
-  const [taskFilter, setTaskFilter] = useState<string>('All');
-  const [taskSearch, setTaskSearch] = useState('');
 
   const [newMember, setNewMember] = useState<Partial<StaffMember>>({
     role: 'Cleaner',
@@ -120,15 +118,21 @@ const Staff: React.FC = () => {
   const ProfileTasks = ({ member }: { member: StaffMember }) => {
     const memberTasks = getStaffTasks(member.id);
     
+    // Filter States
+    const [statusFilter, setStatusFilter] = useState<string>('All');
+    const [priorityFilter, setPriorityFilter] = useState<string>('All');
+    const [taskSearch, setTaskSearch] = useState('');
+    
     const filtered = memberTasks.filter(t => {
-        const matchesStatus = taskFilter === 'All' || t.status === taskFilter;
+        const matchesStatus = statusFilter === 'All' || t.status === statusFilter;
+        const matchesPriority = priorityFilter === 'All' || t.priority === priorityFilter;
         const matchesSearch = t.title.toLowerCase().includes(taskSearch.toLowerCase());
-        return matchesStatus && matchesSearch;
+        return matchesStatus && matchesPriority && matchesSearch;
     });
 
     return (
       <div className="space-y-4 animate-in fade-in duration-300 h-full flex flex-col">
-         <div className="flex gap-3">
+         <div className="flex flex-col md:flex-row gap-3">
              <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
                 <input 
@@ -139,18 +143,33 @@ const Staff: React.FC = () => {
                     onChange={(e) => setTaskSearch(e.target.value)}
                 />
              </div>
-             <div className="relative w-40">
-                 <select 
-                    className="w-full pl-3 pr-8 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 appearance-none bg-white"
-                    value={taskFilter}
-                    onChange={(e) => setTaskFilter(e.target.value)}
-                 >
-                     <option value="All">All Status</option>
-                     <option value="Open">Open</option>
-                     <option value="In Progress">In Progress</option>
-                     <option value="Completed">Completed</option>
-                 </select>
-                 <Filter className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" size={14} />
+             <div className="flex gap-2">
+                <div className="relative w-36">
+                    <select 
+                        className="w-full pl-3 pr-8 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 appearance-none bg-white"
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                    >
+                        <option value="All">All Status</option>
+                        <option value="Open">Open</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Completed">Completed</option>
+                    </select>
+                    <Filter className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" size={14} />
+                </div>
+                <div className="relative w-36">
+                    <select 
+                        className="w-full pl-3 pr-8 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 appearance-none bg-white"
+                        value={priorityFilter}
+                        onChange={(e) => setPriorityFilter(e.target.value)}
+                    >
+                        <option value="All">All Priority</option>
+                        <option value="High">High</option>
+                        <option value="Medium">Medium</option>
+                        <option value="Low">Low</option>
+                    </select>
+                    <Flag className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" size={14} />
+                </div>
              </div>
          </div>
 
@@ -158,7 +177,7 @@ const Staff: React.FC = () => {
              {filtered.length === 0 ? (
                  <div className="text-center py-12 text-slate-400 bg-gray-50 rounded-xl border border-dashed border-gray-200">
                     <CheckCircle size={32} className="mx-auto mb-2 opacity-50" />
-                    No tasks found.
+                    No tasks found matching your filters.
                  </div>
              ) : (
                  filtered.map(task => (
@@ -216,7 +235,7 @@ const Staff: React.FC = () => {
             const newDoc: StaffDocument = {
                 id: `sd-${Date.now()}`,
                 name: result.name,
-                type: 'Other', // Simplification
+                type: 'Other',
                 url: result.url,
                 uploadDate: new Date().toISOString().split('T')[0],
                 size: result.size
@@ -227,7 +246,7 @@ const Staff: React.FC = () => {
                 documents: [...(member.documents || []), newDoc] 
             };
             updateStaff(updatedMember);
-            setSelectedProfile(updatedMember); // Update local state to reflect change immediately
+            setSelectedProfile(updatedMember);
         } catch (error) {
             console.error("Upload failed", error);
         } finally {
