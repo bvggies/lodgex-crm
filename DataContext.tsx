@@ -71,6 +71,8 @@ interface DataContextType {
 
   addTemplate: (template: Template) => void;
   deleteTemplate: (id: string) => void;
+
+  importData: (newBookings: Booking[], newFinance: FinanceRecord[]) => void;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -379,6 +381,18 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     addLog('DELETE', 'Template', `Deleted template ${id}`);
   };
 
+  const importData = (newBookings: Booking[], newFinance: FinanceRecord[]) => {
+    if (newBookings.length > 0) {
+      setBookings(prev => [...prev, ...newBookings]);
+      addLog('CREATE', 'Booking', `Bulk imported ${newBookings.length} bookings`);
+    }
+    if (newFinance.length > 0) {
+      setFinance(prev => [...prev, ...newFinance]);
+      addLog('CREATE', 'Finance', `Bulk imported ${newFinance.length} finance records`);
+    }
+    addNotification('Import Successful', `Imported ${newBookings.length} bookings and ${newFinance.length} finance records.`, 'success');
+  };
+
   return (
     <DataContext.Provider value={{
       currentUser, login, logout,
@@ -394,7 +408,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       restoreFromArchive, deleteFromArchive,
       addDocument, deleteDocument,
       addFinanceRecord, deleteFinanceRecord,
-      addTemplate, deleteTemplate
+      addTemplate, deleteTemplate,
+      importData
     }}>
       {children}
     </DataContext.Provider>
