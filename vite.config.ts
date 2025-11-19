@@ -6,4 +6,7 @@ export default defineConfig({
   build: {
     outDir: 'build',
   },
+  define: {
+    'process.env.API_KEY': JSON.stringify("AIzaSyD5YJdiFVg-uNE5Jdsc7pNYRygWH1Gy34Q"),
+  },
 });

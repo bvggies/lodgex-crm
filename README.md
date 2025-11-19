@@ -12,12 +12,13 @@ Lodgex is a comprehensive Property Management CRM designed for efficiency and sc
 - **Finance**: Revenue/expense tracking with monthly P&L reports.
 - **AI Integration**: Automated guest emails and business insights via Gemini API.
 - **RBAC**: Role-Based Access Control for Admins, Managers, Cleaners, and Owners.
+- **Database**: Persisted data using Neon PostgreSQL.
 
 ## Tech Stack
 
 - **Frontend**: React 19 (CRA), TypeScript, Tailwind CSS, Framer Motion, Recharts.
-- **Backend (Simulated)**: Logic contained in React Context (`DataContext`) for this demo, ready for migration to Node/Express.
-- **Database (Simulated)**: In-memory mock data with architecture ready for Neon Postgres.
+- **Backend**: Node.js, Express.
+- **Database**: Neon Postgres.
 - **AI**: Google Gemini API via `@google/genai`.
 
 ## Setup & Installation
@@ -28,39 +29,55 @@ Lodgex is a comprehensive Property Management CRM designed for efficiency and sc
     cd lodgex-crm
     ```
 
-2.  **Install dependencies**:
+2.  **Install Dependencies**:
+    
+    Frontend:
     ```bash
     npm install
     ```
 
-3.  **Configure Environment**:
-    Copy `.env.example` to `.env` and add your API keys.
+    Backend:
     ```bash
-    cp .env.example .env
+    cd server
+    npm install
+    cd ..
     ```
-    *Note: You must add a valid `API_KEY` for Google Gemini features to work.*
 
-4.  **Run Locally**:
+3.  **Database Setup (Neon)**:
+    - Create a project at [neon.tech](https://neon.tech).
+    - Copy the **Connection String**.
+    - Run the SQL from `db/schema.sql` in the Neon SQL Editor to create tables.
+
+4.  **Configure Environment**:
+    - Create `server/.env` and add your `DATABASE_URL`.
+    - (Optional) Create `.env` in root for frontend API keys if needed.
+
+5.  **Run the App**:
+    
+    Start Backend (Terminal 1):
+    ```bash
+    cd server
+    node index.js
+    ```
+
+    Start Frontend (Terminal 2):
     ```bash
     npm start
     ```
-    The app will launch at `http://localhost:3000`.
 
 ## Deployment
 
-This project is optimized for deployment on Vercel.
-
-1.  Push your code to GitHub.
-2.  Import the project into Vercel.
-3.  Add the Environment Variables (specifically `API_KEY`) in the Vercel dashboard.
-4.  Deploy.
+1.  Deploy the **Server** to a service like Render, Railway, or Heroku.
+2.  Deploy the **Frontend** to Vercel.
+3.  Update `src/services/apiService.ts` or use environment variables to point the frontend to your production backend URL.
 
 ## Project Structure
 
 - `src/components`: UI Components (Dashboard, Kanban, Forms).
 - `src/services`: Abstractions for external APIs (Storage, Integrations, AI).
-- `src/DataContext.tsx`: Global state management and business logic.
-- `src/types.ts`: TypeScript interfaces and Enums.
+- `src/DataContext.tsx`: Global state management.
+- `server/`: Node.js Express backend.
+- `db/`: Database schema files.
 
 ## Testing
 
