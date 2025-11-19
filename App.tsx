@@ -21,6 +21,9 @@ import Login from './components/Login';
 import { DataProvider, useData } from './DataContext';
 import { AnimatePresence, motion } from 'framer-motion';
 
+// Cast motion components to any to avoid TypeScript errors with strict prop types
+const MotionDiv = motion.div as any;
+
 declare global {
   interface Window {
     AOS: any;
@@ -107,7 +110,7 @@ const AppContent: React.FC = () => {
         <main className="flex-1 p-6 overflow-y-auto" id="main-content">
             <div className="max-w-7xl mx-auto pb-10">
               <AnimatePresence mode="wait">
-                <motion.div
+                <MotionDiv
                   key={activePage}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -115,7 +118,7 @@ const AppContent: React.FC = () => {
                   transition={{ duration: 0.2 }}
                 >
                   {renderContent()}
-                </motion.div>
+                </MotionDiv>
               </AnimatePresence>
             </div>
         </main>

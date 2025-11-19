@@ -5,6 +5,10 @@ import { Lock, Mail, ArrowRight, Shield, User, Wrench, Brush } from 'lucide-reac
 import { motion } from 'framer-motion';
 import Logo from './Logo';
 
+// Cast motion components to any to avoid TypeScript errors with strict prop types
+const MotionDiv = motion.div as any;
+const MotionButton = motion.button as any;
+
 const Login: React.FC = () => {
   const { login } = useData();
   const [email, setEmail] = useState('');
@@ -32,7 +36,7 @@ const Login: React.FC = () => {
           <div className="absolute top-1/2 -right-24 w-96 h-96 bg-violet-500 rounded-full mix-blend-multiply filter blur-3xl opacity-30"></div>
       </div>
 
-      <motion.div 
+      <MotionDiv 
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
@@ -41,7 +45,7 @@ const Login: React.FC = () => {
         
         {/* Left Side - Brand */}
         <div className="md:w-1/2 bg-indigo-50 p-12 flex flex-col justify-between relative overflow-hidden">
-          <motion.div 
+          <MotionDiv 
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.2 }}
@@ -58,9 +62,9 @@ const Login: React.FC = () => {
             <p className="text-slate-600 text-lg leading-relaxed">
               Streamline operations, automate tasks, and maximize revenue with Lodgex's all-in-one CRM solution.
             </p>
-          </motion.div>
+          </MotionDiv>
           
-          <motion.div 
+          <MotionDiv 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
@@ -74,7 +78,7 @@ const Login: React.FC = () => {
                 <div className="text-3xl font-bold text-indigo-600 mb-1">24/7</div>
                 <div className="text-sm text-slate-500 font-medium">Automated Support</div>
             </div>
-          </motion.div>
+          </MotionDiv>
         </div>
 
         {/* Right Side - Login Form */}
@@ -94,7 +98,7 @@ const Login: React.FC = () => {
                     { id: 'Cleaner', icon: Brush },
                     { id: 'Maintenance', icon: Wrench }
                 ].map((role) => (
-                    <motion.button
+                    <MotionButton
                         whileTap={{ scale: 0.95 }}
                         key={role.id}
                         onClick={() => setSelectedRole(role.id as any)}
@@ -106,7 +110,7 @@ const Login: React.FC = () => {
                     >
                         <role.icon size={18} className="mb-1" />
                         {role.id}
-                    </motion.button>
+                    </MotionButton>
                 ))}
             </div>
           </div>
@@ -143,7 +147,7 @@ const Login: React.FC = () => {
               </div>
             </div>
 
-            <motion.button 
+            <MotionButton 
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               type="submit"
@@ -151,7 +155,7 @@ const Login: React.FC = () => {
               className="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-200 transition-all flex items-center justify-center mt-4 disabled:opacity-70"
             >
               {isLoading ? (
-                <motion.div 
+                <MotionDiv 
                   animate={{ rotate: 360 }}
                   transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                   className="w-6 h-6 border-2 border-white border-t-transparent rounded-full"
@@ -159,14 +163,14 @@ const Login: React.FC = () => {
               ) : (
                 <>Sign In <ArrowRight size={20} className="ml-2" /></>
               )}
-            </motion.button>
+            </MotionButton>
           </form>
 
           <div className="mt-8 text-center text-xs text-slate-400">
             &copy; 2023 Lodgex Property Management. All rights reserved.
           </div>
         </div>
-      </motion.div>
+      </MotionDiv>
     </div>
   );
 };

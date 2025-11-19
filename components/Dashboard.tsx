@@ -13,6 +13,9 @@ import { generateInsight } from '../services/geminiService';
 import { useData } from '../DataContext';
 import { motion } from 'framer-motion';
 
+// Cast motion components to any to avoid TypeScript errors with strict prop types
+const MotionDiv = motion.div as any;
+
 interface DashboardProps {
   setPage: (page: string) => void;
 }
@@ -35,7 +38,7 @@ const item = {
 };
 
 const StatCard: React.FC<{ label: string; value: string; subValue?: string; trend: string; positive: boolean; icon: any }> = ({ label, value, subValue, trend, positive, icon: Icon }) => (
-  <motion.div variants={item} className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 group">
+  <MotionDiv variants={item} className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 group">
     <div className="flex justify-between items-start mb-4">
       <div className={`p-3 rounded-xl transition-colors ${positive ? 'bg-indigo-50 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white' : 'bg-orange-50 text-orange-600 group-hover:bg-orange-600 group-hover:text-white'}`}>
         <Icon size={24} />
@@ -50,7 +53,7 @@ const StatCard: React.FC<{ label: string; value: string; subValue?: string; tren
       <h3 className="text-2xl font-bold text-slate-800">{value}</h3>
       {subValue && <p className="text-xs text-slate-400 mt-1">{subValue}</p>}
     </div>
-  </motion.div>
+  </MotionDiv>
 );
 
 const Dashboard: React.FC<DashboardProps> = ({ setPage }) => {
@@ -122,7 +125,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setPage }) => {
   if (isStaff) {
       const myTasks = tasks.filter(t => t.status !== 'Completed'); // Simplified: show all open tasks for demo
       return (
-        <motion.div variants={container} initial="hidden" animate="show" className="space-y-8 pb-10">
+        <MotionDiv variants={container} initial="hidden" animate="show" className="space-y-8 pb-10">
             <div className="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm flex flex-col md:flex-row justify-between items-center">
                 <div>
                     <h2 className="text-2xl font-bold text-slate-800 mb-2">Welcome, {currentUser?.name}</h2>
@@ -137,7 +140,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setPage }) => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <motion.div variants={item} className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+                <MotionDiv variants={item} className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
                     <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center">
                         <AlertCircle className="mr-2 text-orange-500" size={20}/> Priority Tasks
                     </h3>
@@ -155,24 +158,24 @@ const Dashboard: React.FC<DashboardProps> = ({ setPage }) => {
                             <p className="text-slate-400 text-sm italic">No high priority tasks.</p>
                          )}
                     </div>
-                </motion.div>
+                </MotionDiv>
                 
-                <motion.div variants={item} className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+                <MotionDiv variants={item} className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
                     <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center">
                         <Briefcase className="mr-2 text-indigo-500" size={20}/> Recent Activity
                     </h3>
                     <p className="text-slate-500 text-sm">Check the main task board for full history.</p>
-                </motion.div>
+                </MotionDiv>
             </div>
-        </motion.div>
+        </MotionDiv>
       );
   }
 
   // --- ADMIN / OWNER VIEW ---
   return (
-    <motion.div variants={container} initial="hidden" animate="show" className="space-y-8 pb-10">
+    <MotionDiv variants={container} initial="hidden" animate="show" className="space-y-8 pb-10">
       {/* AI Insight Banner */}
-      <motion.div variants={item} className="bg-gradient-to-r from-indigo-600 to-violet-600 rounded-2xl p-1 shadow-lg">
+      <MotionDiv variants={item} className="bg-gradient-to-r from-indigo-600 to-violet-600 rounded-2xl p-1 shadow-lg">
         <div className="bg-indigo-950/20 backdrop-blur-sm rounded-xl p-6 text-white relative overflow-hidden">
             <div className="absolute top-0 right-0 p-8 opacity-10 transform translate-x-10 -translate-y-10">
                 <Wand2 size={140} />
@@ -192,7 +195,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setPage }) => {
                 </button>
             </div>
         </div>
-      </motion.div>
+      </MotionDiv>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -234,7 +237,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setPage }) => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* Revenue Chart */}
-        <motion.div variants={item} className="lg:col-span-2 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+        <MotionDiv variants={item} className="lg:col-span-2 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
           <div className="flex justify-between items-center mb-6">
             <div>
                 <h3 className="text-lg font-bold text-slate-800">Revenue vs Expenses</h3>
@@ -262,10 +265,10 @@ const Dashboard: React.FC<DashboardProps> = ({ setPage }) => {
               </BarChart>
             </ResponsiveContainer>
           </div>
-        </motion.div>
+        </MotionDiv>
 
         {/* Channel Distribution */}
-        <motion.div variants={item} className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
+        <MotionDiv variants={item} className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
           <h3 className="text-lg font-bold text-slate-800 mb-1">Booking Channels</h3>
           <p className="text-sm text-slate-500 mb-6">Where your guests are coming from</p>
           
@@ -294,14 +297,14 @@ const Dashboard: React.FC<DashboardProps> = ({ setPage }) => {
              <span className="text-sm font-medium text-indigo-900">Direct Bookings</span>
              <span className="text-lg font-bold text-indigo-600">24%</span>
           </div>
-        </motion.div>
+        </MotionDiv>
       </div>
 
       {/* Operational Widgets */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* Upcoming Arrivals */}
-        <motion.div variants={item} className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <MotionDiv variants={item} className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
            <div className="p-6 border-b border-gray-50 flex justify-between items-center">
                 <h3 className="text-lg font-bold text-slate-800">Upcoming Arrivals</h3>
                 <button onClick={() => setPage('bookings')} className="text-sm text-indigo-600 font-medium hover:text-indigo-800">View Calendar</button>
@@ -333,10 +336,10 @@ const Dashboard: React.FC<DashboardProps> = ({ setPage }) => {
                    </div>
                ))}
            </div>
-        </motion.div>
+        </MotionDiv>
 
         {/* Task Overview */}
-        <motion.div variants={item} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <MotionDiv variants={item} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
             <h3 className="text-lg font-bold text-slate-800 mb-1">Task Overview</h3>
             <p className="text-sm text-slate-500 mb-6">Current operational status</p>
             
@@ -367,9 +370,9 @@ const Dashboard: React.FC<DashboardProps> = ({ setPage }) => {
                     <span className="text-xs font-bold">Add Maint.</span>
                 </button>
             </div>
-        </motion.div>
+        </MotionDiv>
       </div>
-    </motion.div>
+    </MotionDiv>
   );
 };
 

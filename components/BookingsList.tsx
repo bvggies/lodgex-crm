@@ -6,6 +6,10 @@ import { draftGuestEmail } from '../services/geminiService';
 import { useData } from '../DataContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
+// Cast motion components to any to avoid TypeScript errors with strict prop types
+const MotionDiv = motion.div as any;
+const MotionTr = motion.tr as any;
+
 const BookingsList: React.FC = () => {
   const { bookings, addBooking, updateBooking, properties, guests, checkAvailability } = useData();
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('calendar');
@@ -150,7 +154,7 @@ const BookingsList: React.FC = () => {
     const dates = getDates();
     
     return (
-        <motion.div 
+        <MotionDiv 
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
           className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col"
@@ -265,7 +269,7 @@ const BookingsList: React.FC = () => {
                     </div>
                 </div>
             </div>
-        </motion.div>
+        </MotionDiv>
     );
   };
 
@@ -308,7 +312,7 @@ const BookingsList: React.FC = () => {
 
       {/* List View */}
       {viewMode === 'list' && (
-        <motion.div 
+        <MotionDiv 
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden"
@@ -328,7 +332,7 @@ const BookingsList: React.FC = () => {
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {bookings.map((booking, idx) => (
-                  <motion.tr 
+                  <MotionTr 
                     key={booking.id}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -380,12 +384,12 @@ const BookingsList: React.FC = () => {
                         </button>
                       </div>
                     </td>
-                  </motion.tr>
+                  </MotionTr>
                 ))}
               </tbody>
             </table>
           </div>
-        </motion.div>
+        </MotionDiv>
       )}
 
       {/* Timeline View */}
@@ -394,13 +398,13 @@ const BookingsList: React.FC = () => {
       {/* Booking Details / Email Modal */}
       <AnimatePresence>
         {selectedBooking && (
-          <motion.div 
+          <MotionDiv 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
           >
-            <motion.div 
+            <MotionDiv 
                initial={{ scale: 0.95, opacity: 0 }}
                animate={{ scale: 1, opacity: 1 }}
                exit={{ scale: 0.95, opacity: 0 }}
@@ -518,21 +522,21 @@ const BookingsList: React.FC = () => {
                       </div>
                   </div>
               )}
-            </motion.div>
-          </motion.div>
+            </MotionDiv>
+          </MotionDiv>
         )}
       </AnimatePresence>
 
       {/* Add Booking Modal */}
       <AnimatePresence>
         {isAddModalOpen && (
-            <motion.div 
+            <MotionDiv 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
             >
-              <motion.div 
+              <MotionDiv 
                 initial={{ scale: 0.95, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.95, opacity: 0 }}
@@ -627,8 +631,8 @@ const BookingsList: React.FC = () => {
                       </button>
                   </div>
                 </form>
-              </motion.div>
-            </motion.div>
+              </MotionDiv>
+            </MotionDiv>
         )}
       </AnimatePresence>
     </div>

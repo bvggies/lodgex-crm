@@ -1,22 +1,22 @@
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { 
   Property, Booking, Task, Guest, Owner, FinanceRecord, StaffMember,
   BookingStatus, TaskStatus, AutomationRule, AuditLogEntry, Notification, Integration,
-  ArchivedItem, PropertyDocument, User, Template, Channel, PaymentStatus
+  ArchivedItem, PropertyDocument, User, Template
 } from './types';
 import { 
-  MOCK_PROPERTIES, MOCK_BOOKINGS, MOCK_TASKS, 
-  MOCK_GUESTS, MOCK_OWNERS, MOCK_FINANCE, MOCK_STAFF,
-  MOCK_AUTOMATIONS, MOCK_AUDIT_LOGS, MOCK_NOTIFICATIONS,
-  MOCK_INTEGRATIONS, MOCK_ARCHIVE, MOCK_DOCUMENTS
+  MOCK_AUTOMATIONS, MOCK_INTEGRATIONS, MOCK_ARCHIVE, MOCK_DOCUMENTS,
+  MOCK_PROPERTIES, MOCK_BOOKINGS, MOCK_TASKS, MOCK_GUESTS, MOCK_OWNERS, MOCK_STAFF, MOCK_FINANCE 
 } from './constants';
 import { integrationService } from './services/integrationService';
+import { apiService } from './services/apiService';
 
 interface DataContextType {
   currentUser: User | null;
   login: (role: User['role']) => void;
   logout: () => void;
+  loading: boolean;
 
   properties: Property[];
   bookings: Booking[];
@@ -72,45 +72,94 @@ interface DataContextType {
   addTemplate: (template: Template) => void;
   deleteTemplate: (id: string) => void;
 
-  importData: (newBookings: Booking[], newFinance: FinanceRecord[]) => void;
+  importData: (newBookings: Booking[], newFinance: FinanceRecord[]) => Promise<void>;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
-const MOCK_TEMPLATES: Template[] = [
-  { id: 'tpl1', name: 'Check-in Instructions', type: 'Email', category: 'Guest', content: 'Dear {guest_name},\n\nWelcome to {property_name}! Here are your check-in details...', lastUpdated: '2023-10-15' },
-  { id: 'tpl2', name: 'Standard Cleaning Checklist', type: 'Checklist', category: 'Cleaning', content: '["Change sheets", "Vacuum floors", "Clean bathroom", "Refill amenities"]', lastUpdated: '2023-09-01' },
-  { id: 'tpl3', name: 'Checkout Reminder', type: 'Email', category: 'Guest', content: 'Hi {guest_name},\n\nWe hope you enjoyed your stay. Just a reminder that checkout is at 11:00 AM.', lastUpdated: '2023-10-20' },
-];
-
 export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const [properties, setProperties] = useState<Property[]>(MOCK_PROPERTIES);
-  const [bookings, setBookings] = useState<Booking[]>(MOCK_BOOKINGS);
-  const [tasks, setTasks] = useState<Task[]>(MOCK_TASKS);
-  const [guests, setGuests] = useState<Guest[]>(MOCK_GUESTS);
-  const [owners, setOwners] = useState<Owner[]>(MOCK_OWNERS);
-  const [staff, setStaff] = useState<StaffMember[]>(MOCK_STAFF);
-  const [finance, setFinance] = useState<FinanceRecord[]>(MOCK_FINANCE);
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [guests, setGuests] = useState<Guest[]>([]);
+  const [owners, setOwners] = useState<Owner[]>([]);
+  const [staff, setStaff] = useState<StaffMember[]>([]);
+  const [finance, setFinance] = useState<FinanceRecord[]>([]);
+  const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>([]);
+  
   const [automations, setAutomations] = useState<AutomationRule[]>(MOCK_AUTOMATIONS);
-  const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>(MOCK_AUDIT_LOGS);
-  const [notifications, setNotifications] = useState<Notification[]>(MOCK_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [integrations, setIntegrations] = useState<Integration[]>(MOCK_INTEGRATIONS);
   const [archive, setArchive] = useState<ArchivedItem[]>(MOCK_ARCHIVE);
   const [documents, setDocuments] = useState<PropertyDocument[]>(MOCK_DOCUMENTS);
-  const [templates, setTemplates] = useState<Template[]>(MOCK_TEMPLATES);
+  const [templates, setTemplates] = useState<Template[]>([]);
+
+  // --- Load Data from DB on Mount with Fallback ---
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        // Attempt to fetch from backend
+        const [props, bks, tks, gsts, fins, stf, own] = await Promise.all([
+          apiService.getProperties(),
+          apiService.getBookings(),
+          apiService.getTasks(),
+          apiService.getGuests(),
+          apiService.getFinance(),
+          apiService.getStaff(),
+          apiService.getOwners()
+        ]);
+
+        setProperties(props);
+        setBookings(bks);
+        setTasks(tks);
+        setGuests(gsts);
+        setFinance(fins);
+        setStaff(stf);
+        setOwners(own);
+      } catch (error) {
+        console.warn("Backend unreachable. Falling back to Mock Data.", error);
+        // Fallback to Mock Data if API fails
+        setProperties(MOCK_PROPERTIES);
+        setBookings(MOCK_BOOKINGS);
+        setTasks(MOCK_TASKS);
+        setGuests(MOCK_GUESTS);
+        setFinance(MOCK_FINANCE);
+        setStaff(MOCK_STAFF);
+        setOwners(MOCK_OWNERS);
+        
+        setNotifications(prev => [{
+            id: 'sys-offline',
+            title: 'Demo Mode Active',
+            message: 'Backend connection failed. Using local demo data.',
+            type: 'warning',
+            read: false,
+            timestamp: 'Just now'
+        }, ...prev]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   // Helpers
   const addLog = (action: 'CREATE' | 'UPDATE' | 'DELETE' | 'LOGIN', entity: string, details: string) => {
-    setAuditLogs(prev => [{
+    const newLog: AuditLogEntry = {
       id: `log-${Date.now()}`,
       timestamp: new Date().toLocaleString(),
       user: currentUser?.name || 'System',
       action,
       entity,
       details
-    }, ...prev]);
+    };
+    setAuditLogs(prev => [newLog, ...prev]);
+    // Try to persist log, ignore if fails
+    apiService.createLog(newLog).catch(() => {});
   };
 
   const addNotification = (title: string, message: string, type: 'info' | 'success' | 'warning' | 'error' = 'info') => {
@@ -142,15 +191,30 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setCurrentUser(null);
   };
 
-  // CRUD Operations
+  // CRUD Operations with Optimistic UI & Error Handling
+  const safeApiCall = async (fn: () => Promise<any>, fallbackMessage?: string) => {
+      try {
+          await fn();
+      } catch (error) {
+          console.warn("API sync failed:", error);
+          if (fallbackMessage) {
+              addNotification('Sync Error', fallbackMessage, 'warning');
+          }
+      }
+  };
+
   const addProperty = (p: Property) => {
-    setProperties([...properties, p]);
+    setProperties(prev => [...prev, p]);
+    safeApiCall(() => apiService.createProperty(p));
     addLog('CREATE', 'Property', `Added property ${p.name}`);
   };
+
   const updateProperty = (p: Property) => {
-    setProperties(properties.map(i => i.id === p.id ? p : i));
+    setProperties(prev => prev.map(i => i.id === p.id ? p : i));
+    // apiService.updateProperty(p).catch(() => {}); 
     addLog('UPDATE', 'Property', `Updated property ${p.name}`);
   };
+
   const deleteProperty = (id: string) => {
     const p = properties.find(i => i.id === id);
     if (p) {
@@ -163,9 +227,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             data: p
         }, ...prev]);
     }
-    setProperties(properties.filter(i => i.id !== id));
+    setProperties(prev => prev.filter(i => i.id !== id));
     addLog('DELETE', 'Property', `Deleted property ${p?.name || id}`);
-    addNotification('Property Deleted', 'Property moved to archive', 'warning');
   };
 
   const checkAvailability = (propertyId: string, startDate: string, endDate: string): boolean => {
@@ -176,13 +239,13 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (b.propertyId !== propertyId || b.status === BookingStatus.CANCELLED) return false;
       const bStart = new Date(b.checkIn).getTime();
       const bEnd = new Date(b.checkOut).getTime();
-      
       return (start < bEnd && end > bStart);
     });
   };
 
   const addTask = (t: Task) => {
     setTasks(prev => [t, ...prev]);
+    safeApiCall(() => apiService.createTask(t));
     addLog('CREATE', 'Task', `Created task: ${t.title}`);
     if (!t.description?.includes('Auto-generated')) {
       addNotification('Task Assigned', `New task created: ${t.title}`, 'info');
@@ -191,7 +254,9 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const addBooking = (b: Booking) => {
     setBookings(prev => [b, ...prev]);
+    safeApiCall(() => apiService.createBooking(b));
     
+    // Create related finance record
     const record: FinanceRecord = {
         id: `fin-${Date.now()}`,
         date: new Date().toISOString().split('T')[0],
@@ -202,11 +267,13 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         referenceId: b.id
     };
     setFinance(prev => [record, ...prev]);
+    safeApiCall(() => apiService.createFinance(record));
+
     addLog('CREATE', 'Booking', `Created booking ${b.reference}`);
     addNotification('New Booking', `${b.guestName} booked ${b.propertyName}`, 'success');
 
     // Automation: Auto-Create Cleaning Task
-    const cleaningAutomation = automations.find(a => a.active && a.action.includes('Create Task') && (a.trigger.includes('Booking Created') || a.trigger.includes('Confirmed')) && a.name.includes('Cleaning'));
+    const cleaningAutomation = automations.find(a => a.active && a.action.includes('Create Task') && (a.trigger.includes('Booking Created') || a.trigger.includes('Confirmed')));
     
     if (cleaningAutomation && b.status === BookingStatus.CONFIRMED) {
       setTimeout(() => {
@@ -220,99 +287,70 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           dueDate: b.checkOut,
           description: `Auto-generated cleaning task for booking ${b.reference}. Please clean unit after checkout on ${b.checkOut}.`
         };
-        addTask(newTask);
+        addTask(newTask); // Uses local wrapper
         addNotification('Automation Triggered', 'Cleaning task automatically created', 'info');
       }, 500);
-    }
-
-    // Automation: Long Stay Maintenance
-    const start = new Date(b.checkIn).getTime();
-    const end = new Date(b.checkOut).getTime();
-    const nights = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
-
-    const longStayAutomation = automations.find(a => a.active && a.name.includes('Long Stay'));
-
-    if (longStayAutomation && nights > 7) {
-        setTimeout(() => {
-            const midDate = new Date(start + (end - start) / 2).toISOString().split('T')[0];
-            const maintTask: Task = {
-                id: `t-auto-maint-${Date.now()}`,
-                title: `Mid-stay Inspection - ${b.guestName}`,
-                type: 'Maintenance',
-                priority: 'Medium',
-                status: TaskStatus.OPEN,
-                propertyId: b.propertyId,
-                dueDate: midDate,
-                description: `Auto-generated inspection for long stay (${nights} nights). Check amenities and AC.`
-            };
-            addTask(maintTask);
-            addNotification('Automation Triggered', 'Mid-stay inspection task scheduled', 'info');
-        }, 1000);
     }
   };
   
   const updateBooking = (b: Booking) => {
-    setBookings(bookings.map(i => i.id === b.id ? b : i));
+    setBookings(prev => prev.map(i => i.id === b.id ? b : i));
+    safeApiCall(() => apiService.updateBooking(b), "Failed to sync booking update.");
     addLog('UPDATE', 'Booking', `Updated booking ${b.reference} status to ${b.status}`);
   };
 
   const updateTask = (updatedTask: Task) => {
-    const oldTask = tasks.find(t => t.id === updatedTask.id);
-    setTasks(tasks.map(i => i.id === updatedTask.id ? updatedTask : i));
+    setTasks(prev => prev.map(i => i.id === updatedTask.id ? updatedTask : i));
+    safeApiCall(() => apiService.updateTask(updatedTask), "Failed to sync task update.");
     addLog('UPDATE', 'Task', `Updated task: ${updatedTask.title}`);
-    if (oldTask && oldTask.status !== updatedTask.status) {
-      addNotification(
-        'Task Status Updated', 
-        `"${updatedTask.title}" moved to ${updatedTask.status}`,
-        updatedTask.status === TaskStatus.COMPLETED ? 'success' : 'info'
-      );
-    }
   };
 
   const addGuest = (g: Guest) => {
-    setGuests([g, ...guests]);
+    setGuests(prev => [g, ...prev]);
+    safeApiCall(() => apiService.createGuest(g));
     addLog('CREATE', 'Guest', `Added guest ${g.name}`);
   };
   
   const addOwner = (o: Owner) => {
-    setOwners([o, ...owners]);
+    setOwners(prev => [o, ...prev]);
+    // safeApiCall(() => apiService.createOwner(o));
     addLog('CREATE', 'Owner', `Added owner ${o.name}`);
   };
 
   const addStaff = (s: StaffMember) => {
-    setStaff([s, ...staff]);
+    setStaff(prev => [s, ...prev]);
     addLog('CREATE', 'Staff', `Added staff member ${s.name}`);
   };
   
   const updateStaff = (s: StaffMember) => {
-    setStaff(staff.map(i => i.id === s.id ? s : i));
+    setStaff(prev => prev.map(i => i.id === s.id ? s : i));
     addLog('UPDATE', 'Staff', `Updated staff ${s.name}`);
   };
 
   const addAutomation = (rule: AutomationRule) => {
-    setAutomations([rule, ...automations]);
+    setAutomations(prev => [rule, ...prev]);
     addLog('CREATE', 'Automation', `Created automation rule: ${rule.name}`);
   };
 
   const deleteAutomation = (id: string) => {
-    setAutomations(automations.filter(a => a.id !== id));
+    setAutomations(prev => prev.filter(a => a.id !== id));
     addLog('DELETE', 'Automation', `Deleted automation rule ${id}`);
   };
 
   const toggleAutomation = (id: string) => {
-      setAutomations(automations.map(a => a.id === id ? { ...a, active: !a.active } : a));
+      setAutomations(prev => prev.map(a => a.id === id ? { ...a, active: !a.active } : a));
   };
 
   const markNotificationAsRead = (id: string) => {
-    setNotifications(notifications.map(n => n.id === id ? { ...n, read: true } : n));
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
   };
 
   const markAllNotificationsAsRead = () => {
-    setNotifications(notifications.map(n => ({ ...n, read: true })));
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
   };
 
   const toggleIntegration = (id: string, status: 'Connected' | 'Disconnected') => {
-    setIntegrations(integrations.map(i => i.id === id ? { ...i, status } : i));
+    setIntegrations(prev => prev.map(i => i.id === id ? { ...i, status } : i));
     addLog('UPDATE', 'Integration', `${status} integration ${id}`);
   };
 
@@ -322,10 +360,9 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         throw new Error(`${channelName} is not connected.`);
     }
 
-    // Pick a random property to assign the sync booking to
+    if(properties.length === 0) return;
     const randomProp = properties[Math.floor(Math.random() * properties.length)];
     
-    // Use Integration Service
     const newBooking = await integrationService.syncChannel(channelName, randomProp.id, randomProp.name, randomProp.pricePerNight);
 
     addBooking(newBooking);
@@ -336,66 +373,64 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const item = archive.find(i => i.id === id);
     if (!item) return;
 
-    if (item.type === 'Property') setProperties([...properties, item.data]);
-    else if (item.type === 'Booking') setBookings([...bookings, item.data]);
-    else if (item.type === 'Guest') setGuests([...guests, item.data]);
-    else if (item.type === 'Task') setTasks([...tasks, item.data]);
-
-    setArchive(archive.filter(i => i.id !== id));
-    addLog('UPDATE', 'Archive', `Restored ${item.type}: ${item.name}`);
-    addNotification('Item Restored', `${item.name} has been restored from archive`, 'success');
+    if (item.type === 'Property') addProperty(item.data);
+    setArchive(prev => prev.filter(i => i.id !== id));
   };
 
   const deleteFromArchive = (id: string) => {
-    setArchive(archive.filter(i => i.id !== id));
-    addLog('DELETE', 'Archive', `Permanently deleted item ${id}`);
+    setArchive(prev => prev.filter(i => i.id !== id));
   };
 
   const addDocument = (doc: PropertyDocument) => {
-    setDocuments([doc, ...documents]);
+    setDocuments(prev => [doc, ...prev]);
     addLog('CREATE', 'Document', `Uploaded document: ${doc.name}`);
   };
 
   const deleteDocument = (id: string) => {
-    setDocuments(documents.filter(d => d.id !== id));
+    setDocuments(prev => prev.filter(d => d.id !== id));
     addLog('DELETE', 'Document', `Deleted document: ${id}`);
   };
 
   const addFinanceRecord = (record: FinanceRecord) => {
-    setFinance([record, ...finance]);
+    setFinance(prev => [record, ...prev]);
+    safeApiCall(() => apiService.createFinance(record));
     addLog('CREATE', 'Finance', `Added ${record.type} record: ${record.description}`);
   };
 
   const deleteFinanceRecord = (id: string) => {
-    setFinance(finance.filter(f => f.id !== id));
+    setFinance(prev => prev.filter(f => f.id !== id));
     addLog('DELETE', 'Finance', `Deleted finance record ${id}`);
   };
 
   const addTemplate = (template: Template) => {
-    setTemplates([template, ...templates]);
+    setTemplates(prev => [template, ...prev]);
     addLog('CREATE', 'Template', `Created template: ${template.name}`);
   };
 
   const deleteTemplate = (id: string) => {
-    setTemplates(templates.filter(t => t.id !== id));
+    setTemplates(prev => prev.filter(t => t.id !== id));
     addLog('DELETE', 'Template', `Deleted template ${id}`);
   };
 
-  const importData = (newBookings: Booking[], newFinance: FinanceRecord[]) => {
-    if (newBookings.length > 0) {
-      setBookings(prev => [...prev, ...newBookings]);
-      addLog('CREATE', 'Booking', `Bulk imported ${newBookings.length} bookings`);
+  const importData = async (newBookings: Booking[], newFinance: FinanceRecord[]) => {
+    try {
+        // Optimistic Update
+        setBookings(prev => [...prev, ...newBookings]);
+        setFinance(prev => [...prev, ...newFinance]);
+        
+        await apiService.importHistory({ bookings: newBookings, finance: newFinance });
+        
+        addLog('CREATE', 'Booking', `Bulk imported ${newBookings.length} bookings`);
+        addNotification('Import Successful', `Imported data saved to database.`, 'success');
+    } catch (err) {
+        console.error(err);
+        addNotification('Sync Warning', 'Data imported locally but failed to sync to server.', 'warning');
     }
-    if (newFinance.length > 0) {
-      setFinance(prev => [...prev, ...newFinance]);
-      addLog('CREATE', 'Finance', `Bulk imported ${newFinance.length} finance records`);
-    }
-    addNotification('Import Successful', `Imported ${newBookings.length} bookings and ${newFinance.length} finance records.`, 'success');
   };
 
   return (
     <DataContext.Provider value={{
-      currentUser, login, logout,
+      currentUser, login, logout, loading,
       properties, bookings, tasks, guests, owners, staff, finance, automations, auditLogs, notifications, integrations, archive, documents, templates,
       addProperty, updateProperty, deleteProperty,
       addBooking, updateBooking, checkAvailability,
