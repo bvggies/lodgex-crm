@@ -1,8 +1,9 @@
 
 import React, { useState } from 'react';
 import { useData } from '../DataContext';
-import { Building2, Lock, Mail, ArrowRight, Shield, User, Wrench, Brush, CheckCircle2 } from 'lucide-react';
+import { Lock, Mail, ArrowRight, Shield, User, Wrench, Brush } from 'lucide-react';
 import { motion } from 'framer-motion';
+import Logo from './Logo';
 
 const Login: React.FC = () => {
   const { login } = useData();
@@ -22,12 +23,20 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-600 to-violet-800 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-600 to-violet-800 flex items-center justify-center p-4 relative overflow-hidden">
+      
+      {/* Background Patterns */}
+      <div className="absolute inset-0 z-0">
+          <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+          <div className="absolute -top-24 -left-24 w-96 h-96 bg-indigo-500 rounded-full mix-blend-multiply filter blur-3xl opacity-30"></div>
+          <div className="absolute top-1/2 -right-24 w-96 h-96 bg-violet-500 rounded-full mix-blend-multiply filter blur-3xl opacity-30"></div>
+      </div>
+
       <motion.div 
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
-        className="bg-white w-full max-w-5xl rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row h-[600px]"
+        className="bg-white w-full max-w-5xl rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row h-[650px] relative z-10"
       >
         
         {/* Left Side - Brand */}
@@ -38,15 +47,16 @@ const Login: React.FC = () => {
             transition={{ delay: 0.2 }}
             className="relative z-10"
           >
-            <div className="flex items-center space-x-3 mb-8">
-              <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-indigo-200">L</div>
-              <span className="text-2xl font-bold text-slate-800 tracking-tight">Lodgex</span>
+            <div className="mb-10">
+                <Logo iconSize={48} textSize="text-4xl" />
             </div>
+            
             <h1 className="text-4xl font-bold text-slate-800 mb-4 leading-tight">
-              Professional Property Management
+              Elevate Your <br/>
+              <span className="text-indigo-600">Property Management</span>
             </h1>
-            <p className="text-slate-600 text-lg">
-              Streamline your operations, boost revenue, and delight your guests with our all-in-one CRM solution.
+            <p className="text-slate-600 text-lg leading-relaxed">
+              Streamline operations, automate tasks, and maximize revenue with Lodgex's all-in-one CRM solution.
             </p>
           </motion.div>
           
@@ -56,27 +66,15 @@ const Login: React.FC = () => {
             transition={{ delay: 0.4 }}
             className="relative z-10 grid grid-cols-2 gap-4 mt-12"
           >
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-indigo-100 transform hover:scale-105 transition-transform">
-                <div className="text-2xl font-bold text-indigo-600 mb-1">98%</div>
-                <div className="text-xs text-slate-500 font-medium">Occupancy Rate</div>
+            <div className="bg-white p-5 rounded-xl shadow-sm border border-indigo-100 transform hover:-translate-y-1 transition-transform">
+                <div className="text-3xl font-bold text-indigo-600 mb-1">98%</div>
+                <div className="text-sm text-slate-500 font-medium">Occupancy Rate</div>
             </div>
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-indigo-100 transform hover:scale-105 transition-transform">
-                <div className="text-2xl font-bold text-indigo-600 mb-1">24/7</div>
-                <div className="text-xs text-slate-500 font-medium">Support</div>
+            <div className="bg-white p-5 rounded-xl shadow-sm border border-indigo-100 transform hover:-translate-y-1 transition-transform">
+                <div className="text-3xl font-bold text-indigo-600 mb-1">24/7</div>
+                <div className="text-sm text-slate-500 font-medium">Automated Support</div>
             </div>
           </motion.div>
-
-          {/* Background Decorative Elements */}
-          <motion.div 
-            animate={{ scale: [1, 1.2, 1], rotate: [0, 5, 0] }}
-            transition={{ duration: 20, repeat: Infinity }}
-            className="absolute -bottom-24 -right-24 w-64 h-64 bg-indigo-200 rounded-full mix-blend-multiply filter blur-3xl opacity-50"
-          />
-          <motion.div 
-            animate={{ scale: [1, 1.1, 1], rotate: [0, -5, 0] }}
-            transition={{ duration: 15, repeat: Infinity }}
-            className="absolute top-1/2 -left-24 w-64 h-64 bg-violet-200 rounded-full mix-blend-multiply filter blur-3xl opacity-50"
-          />
         </div>
 
         {/* Right Side - Login Form */}
@@ -87,26 +85,26 @@ const Login: React.FC = () => {
           </div>
 
           {/* Role Selector (Demo Feature) */}
-          <div className="mb-6">
+          <div className="mb-8 p-4 bg-gray-50 rounded-2xl border border-gray-100">
             <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Select Demo Role</label>
-            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+            <div className="grid grid-cols-4 gap-2">
                 {[
-                    { id: 'Admin', icon: Shield, color: 'bg-indigo-100 text-indigo-700' },
-                    { id: 'Manager', icon: User, color: 'bg-blue-100 text-blue-700' },
-                    { id: 'Cleaner', icon: Brush, color: 'bg-emerald-100 text-emerald-700' },
-                    { id: 'Maintenance', icon: Wrench, color: 'bg-orange-100 text-orange-700' }
+                    { id: 'Admin', icon: Shield },
+                    { id: 'Manager', icon: User },
+                    { id: 'Cleaner', icon: Brush },
+                    { id: 'Maintenance', icon: Wrench }
                 ].map((role) => (
                     <motion.button
                         whileTap={{ scale: 0.95 }}
                         key={role.id}
                         onClick={() => setSelectedRole(role.id as any)}
-                        className={`flex items-center px-3 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap border-2 ${
+                        className={`flex flex-col items-center justify-center p-2 rounded-xl text-[10px] font-bold transition-all border-2 ${
                             selectedRole === role.id 
-                            ? 'border-indigo-600 bg-indigo-50' 
-                            : 'border-transparent bg-gray-50 text-slate-500 hover:bg-gray-100'
+                            ? 'border-indigo-600 bg-white shadow-sm text-indigo-700' 
+                            : 'border-transparent text-slate-400 hover:bg-gray-200 hover:text-slate-600'
                         }`}
                     >
-                        <role.icon size={14} className={`mr-1.5 ${selectedRole === role.id ? 'text-indigo-600' : 'text-slate-400'}`} />
+                        <role.icon size={18} className="mb-1" />
                         {role.id}
                     </motion.button>
                 ))}
@@ -117,12 +115,12 @@ const Login: React.FC = () => {
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-1.5">Email Address</label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
                 <input 
                   type="email" 
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                  className="w-full pl-12 pr-4 py-3.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all bg-gray-50 focus:bg-white"
                   placeholder="you@company.com"
                 />
               </div>
@@ -134,12 +132,12 @@ const Login: React.FC = () => {
                  <a href="#" className="text-xs font-bold text-indigo-600 hover:text-indigo-800">Forgot password?</a>
               </div>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
                 <input 
                   type="password" 
                   value={password}
                   onChange={e => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                  className="w-full pl-12 pr-4 py-3.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all bg-gray-50 focus:bg-white"
                   placeholder="••••••••"
                 />
               </div>
@@ -150,16 +148,16 @@ const Login: React.FC = () => {
               whileTap={{ scale: 0.98 }}
               type="submit"
               disabled={isLoading}
-              className="w-full bg-indigo-600 text-white py-3.5 rounded-xl font-bold hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-200 transition-all flex items-center justify-center mt-2 disabled:opacity-70"
+              className="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-200 transition-all flex items-center justify-center mt-4 disabled:opacity-70"
             >
               {isLoading ? (
                 <motion.div 
                   animate={{ rotate: 360 }}
                   transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                  className="w-5 h-5 border-2 border-white border-t-transparent rounded-full"
+                  className="w-6 h-6 border-2 border-white border-t-transparent rounded-full"
                 />
               ) : (
-                <>Sign In <ArrowRight size={18} className="ml-2" /></>
+                <>Sign In <ArrowRight size={20} className="ml-2" /></>
               )}
             </motion.button>
           </form>

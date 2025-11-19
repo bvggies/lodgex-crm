@@ -20,6 +20,7 @@ import {
   Copy
 } from 'lucide-react';
 import { useData } from '../DataContext';
+import Logo from './Logo';
 
 interface SidebarProps {
   activePage: string;
@@ -54,29 +55,29 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage, setPage }) => {
 
   return (
     <aside className="hidden md:flex flex-col w-64 bg-white border-r border-gray-200 h-screen fixed left-0 top-0 z-10">
-      <div className="p-6 flex items-center space-x-2">
-        <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">L</div>
-        <span className="text-xl font-bold text-slate-800 tracking-tight">Lodgex</span>
+      {/* Brand Header */}
+      <div className="h-20 flex items-center px-6 border-b border-gray-50">
+        <Logo iconSize={36} textSize="text-2xl" />
       </div>
 
-      <nav className="flex-1 px-4 space-y-1 overflow-y-auto scrollbar-hide pb-4">
+      <nav className="flex-1 px-4 space-y-1 overflow-y-auto scrollbar-hide py-6">
         {filteredNav.map((item) => (
           <button
             key={item.id}
             onClick={() => setPage(item.id)}
-            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors duration-200 ${
+            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors duration-200 ${
               activePage === item.id 
-                ? 'bg-indigo-50 text-indigo-700' 
+                ? 'bg-indigo-50 text-indigo-700 shadow-sm' 
                 : 'text-slate-600 hover:bg-gray-50 hover:text-slate-900'
             }`}
           >
-            <item.icon size={18} />
+            <item.icon size={20} strokeWidth={activePage === item.id ? 2.5 : 2} />
             <span>{item.label}</span>
           </button>
         ))}
       </nav>
 
-      <div className="p-4 border-t border-gray-200">
+      <div className="p-4 border-t border-gray-200 bg-gray-50/30">
         <button 
           onClick={logout}
           className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium text-slate-600 hover:bg-red-50 hover:text-red-600 transition-colors"
@@ -84,17 +85,17 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage, setPage }) => {
           <LogOut size={18} />
           <span>Logout</span>
         </button>
-        <div className="mt-2 flex items-center px-4 py-2">
+        <div className="mt-3 flex items-center px-4 py-2 bg-white rounded-xl border border-gray-100 shadow-sm">
           {currentUser?.avatarUrl ? (
-            <img src={currentUser.avatarUrl} alt="User" className="w-8 h-8 rounded-full mr-3" />
+            <img src={currentUser.avatarUrl} alt="User" className="w-9 h-9 rounded-full mr-3 border-2 border-white shadow-sm" />
           ) : (
-            <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold mr-3">
+            <div className="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold mr-3 border-2 border-white shadow-sm">
               {currentUser?.name.charAt(0)}
             </div>
           )}
           <div className="text-xs overflow-hidden">
-            <p className="font-semibold text-slate-800 truncate">{currentUser?.name}</p>
-            <p className="text-slate-500 truncate">{currentUser?.email}</p>
+            <p className="font-bold text-slate-800 truncate">{currentUser?.name}</p>
+            <p className="text-slate-500 truncate text-[10px]">{currentUser?.role}</p>
           </div>
         </div>
       </div>
