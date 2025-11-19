@@ -1,3 +1,4 @@
+
 const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
@@ -124,10 +125,12 @@ app.get('/api/tasks', async (req, res) => {
 app.post('/api/tasks', async (req, res) => {
   const t = req.body;
   try {
+    // Check if table has approval_status column, if not default to 'Approved' via logic or schema default
+    const approvalStatus = t.approvalStatus || 'Approved';
     await pool.query(
-      `INSERT INTO tasks (id, title, description, type, priority, status, property_id, due_date, assignee_id)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-      [t.id, t.title, t.description, t.type, t.priority, t.status, t.propertyId, t.dueDate, t.assignee]
+      `INSERT INTO tasks (id, title, description, type, priority, status, property_id, due_date, assignee_id, approval_status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+      [t.id, t.title, t.description, t.type, t.priority, t.status, t.propertyId, t.dueDate, t.assignee, approvalStatus]
     );
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
@@ -138,8 +141,8 @@ app.put('/api/tasks/:id', async (req, res) => {
   const t = req.body;
   try {
     await pool.query(
-      'UPDATE tasks SET status = $1, assignee_id = $2 WHERE id = $3',
-      [t.status, t.assignee, id]
+      'UPDATE tasks SET status = $1, assignee_id = $2, approval_status = $3 WHERE id = $4',
+      [t.status, t.assignee, t.approvalStatus, id]
     );
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: err.message }); }

@@ -1,3 +1,4 @@
+
 -- Users Table (Handles Staff, Admins, Managers, Owners)
 CREATE TABLE IF NOT EXISTS users (
     id VARCHAR(255) PRIMARY KEY,
@@ -70,6 +71,7 @@ CREATE TABLE IF NOT EXISTS tasks (
     property_id VARCHAR(255),
     due_date DATE,
     assignee_id VARCHAR(255),
+    approval_status VARCHAR(50) DEFAULT 'Approved', -- 'Pending', 'Approved', 'Rejected'
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

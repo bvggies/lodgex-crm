@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Task, TaskStatus, StaffMember } from '../types';
-import { Clock, AlertTriangle, ArrowRight, CheckCircle, Plus, X, Save, Upload, Paperclip, User } from 'lucide-react';
+import { Clock, AlertTriangle, ArrowRight, CheckCircle, Plus, X, Save, Upload, Paperclip, User, ShieldCheck, Ban, Check } from 'lucide-react';
 import { useData } from '../DataContext';
 
 interface KanbanProps {
@@ -11,30 +11,65 @@ interface KanbanProps {
 interface TaskCardProps {
   task: Task;
   onMove: (t: Task) => void;
+  onApprove: (t: Task, approved: boolean) => void;
   staff: StaffMember[];
   onAssign: (taskId: string, staffId: string) => void;
+  canAssign: boolean;
+  canApprove: boolean;
 }
 
-const TaskCard: React.FC<TaskCardProps> = ({ task, onMove, staff, onAssign }) => {
+const TaskCard: React.FC<TaskCardProps> = ({ task, onMove, onApprove, staff, onAssign, canAssign, canApprove }) => {
   // Filter staff based on task type to show relevant assignees (including Admins/Managers)
   const relevantStaff = staff.filter(s => {
     if (s.role === 'Admin' || s.role === 'Manager') return true;
     if (task.type === 'Cleaning') return s.role === 'Cleaner';
     if (task.type === 'Maintenance') return s.role === 'Maintenance';
     return true;
-  });
+  }).sort((a, b) => a.name.localeCompare(b.name));
 
   const assignee = staff.find(s => s.id === task.assignee);
+  
+  // Approval Status Logic
+  const isPending = task.approvalStatus === 'Pending';
+  const isRejected = task.approvalStatus === 'Rejected';
+  const isApproved = task.approvalStatus === 'Approved';
+
+  // Status Update Labels
+  const getNextStatusLabel = (currentStatus: TaskStatus) => {
+      if (currentStatus === TaskStatus.OPEN) return 'Start';
+      if (currentStatus === TaskStatus.IN_PROGRESS) return 'Complete';
+      return 'Next';
+  };
 
   return (
-    <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm mb-3 hover:shadow-md transition-all duration-300 group relative hover:-translate-y-0.5">
-      <div className="flex justify-between items-start mb-2">
+    <div className={`bg-white p-4 rounded-xl border shadow-sm mb-3 hover:shadow-md transition-all duration-300 group relative hover:-translate-y-0.5 ${
+      isPending ? 'border-amber-200 bg-amber-50/30' : isRejected ? 'border-red-200 bg-red-50/30' : isApproved ? 'border-green-200/50' : 'border-gray-200'
+    }`}>
+      <div className="flex flex-wrap gap-2 mb-3">
         <span className={`text-[10px] uppercase tracking-wider px-2 py-1 rounded-full font-bold ${
           task.type === 'Cleaning' ? 'bg-blue-50 text-blue-600' : 'bg-orange-50 text-orange-600'
         }`}>
           {task.type}
         </span>
-        <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${
+        
+        {/* Approval Status Indicators */}
+        {isPending && (
+           <span className="text-[10px] uppercase tracking-wider px-2 py-1 rounded-full font-bold bg-amber-100 text-amber-700 flex items-center border border-amber-200">
+             <Clock size={10} className="mr-1" /> Pending Approval
+           </span>
+        )}
+        {isRejected && (
+           <span className="text-[10px] uppercase tracking-wider px-2 py-1 rounded-full font-bold bg-red-100 text-red-700 flex items-center border border-red-200">
+             <X size={10} className="mr-1" /> Rejected
+           </span>
+        )}
+        {isApproved && (
+           <span className="text-[10px] uppercase tracking-wider px-2 py-1 rounded-full font-bold bg-green-100 text-green-700 flex items-center border border-green-200">
+             <Check size={10} className="mr-1" /> Approved
+           </span>
+        )}
+
+        <span className={`text-[10px] font-bold px-2 py-1 rounded-full ml-auto border ${
           task.priority === 'High' ? 'text-red-600 border-red-100 bg-red-50' : 
           task.priority === 'Medium' ? 'text-amber-600 border-amber-100 bg-amber-50' :
           'text-emerald-600 border-emerald-100 bg-emerald-50'
@@ -42,10 +77,11 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onMove, staff, onAssign }) =>
           {task.priority}
         </span>
       </div>
+
       <h4 className="font-bold text-slate-800 text-sm mb-1">{task.title}</h4>
       <p className="text-xs text-slate-500 mb-3 line-clamp-2">{task.description}</p>
       
-      {/* Assignee Dropdown */}
+      {/* Assignee Section */}
       <div className="mb-3">
         <div className="flex items-center space-x-2 bg-gray-50 rounded-lg p-1.5 border border-gray-100">
             {assignee ? (
@@ -55,32 +91,71 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onMove, staff, onAssign }) =>
             ) : (
                <User size={14} className="text-gray-400" />
             )}
-            <select 
-                className="bg-transparent text-xs font-medium text-slate-600 focus:outline-none w-full cursor-pointer"
-                value={task.assignee || ''}
-                onChange={(e) => onAssign(task.id, e.target.value)}
-                onClick={(e) => e.stopPropagation()}
-            >
-                <option value="">Unassigned</option>
-                {relevantStaff.map(s => (
-                    <option key={s.id} value={s.id}>{s.name} ({s.role})</option>
-                ))}
-            </select>
+            
+            {canAssign ? (
+                <select 
+                    className="bg-transparent text-xs font-medium text-slate-600 focus:outline-none w-full cursor-pointer"
+                    value={task.assignee || ''}
+                    onChange={(e) => onAssign(task.id, e.target.value)}
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    <option value="">Unassigned</option>
+                    {relevantStaff.map(s => (
+                        <option key={s.id} value={s.id}>{s.name} ({s.role})</option>
+                    ))}
+                </select>
+            ) : (
+                <span className="text-xs font-medium text-slate-600 px-1">
+                    {assignee ? `${assignee.name} (${assignee.role})` : 'Unassigned'}
+                </span>
+            )}
         </div>
       </div>
 
-      <div className="flex items-center justify-between text-xs pt-3 border-t border-gray-50">
-        <div className="flex items-center text-slate-400 font-medium">
+      <div className="flex items-center justify-between text-xs text-slate-400 font-medium mb-3">
+         <div className="flex items-center">
            <Clock size={12} className="mr-1.5" /> {task.dueDate}
-        </div>
-        
-        {task.status !== TaskStatus.COMPLETED && (
-            <button 
-              onClick={(e) => { e.stopPropagation(); onMove(task); }}
-              className="text-indigo-600 font-bold hover:text-indigo-800 flex items-center opacity-0 group-hover:opacity-100 transition-opacity bg-indigo-50 px-2 py-1 rounded hover:bg-indigo-100"
-            >
-              Next <ArrowRight size={12} className="ml-1" />
-            </button>
+         </div>
+      </div>
+
+      {/* Actions Footer */}
+      <div className="pt-3 border-t border-gray-50">
+        {/* Manager Approval Actions */}
+        {isPending && canApprove ? (
+          <div className="flex space-x-2">
+             <button 
+               onClick={(e) => { e.stopPropagation(); onApprove(task, false); }}
+               className="flex-1 flex items-center justify-center py-2 bg-white border border-red-200 text-red-600 rounded-lg text-xs font-bold hover:bg-red-50 transition-colors"
+             >
+               <X size={14} className="mr-1.5" /> Reject
+             </button>
+             <button 
+               onClick={(e) => { e.stopPropagation(); onApprove(task, true); }}
+               className="flex-1 flex items-center justify-center py-2 bg-indigo-600 text-white rounded-lg text-xs font-bold hover:bg-indigo-700 shadow-sm hover:shadow-indigo-200 transition-colors"
+             >
+               <CheckCircle size={14} className="mr-1.5"/> Approve
+             </button>
+          </div>
+        ) : (
+          /* Standard Workflow Actions */
+          (!isPending && !isRejected && task.status !== TaskStatus.COMPLETED) ? (
+              <button 
+                onClick={(e) => { e.stopPropagation(); onMove(task); }}
+                className="w-full py-2 flex items-center justify-center bg-gray-50 hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 font-bold rounded-lg transition-colors text-xs group-hover:bg-indigo-600 group-hover:text-white"
+              >
+                {getNextStatusLabel(task.status)} <ArrowRight size={12} className="ml-1.5" />
+              </button>
+          ) : (
+             isRejected ? (
+                <div className="w-full py-1.5 text-center text-xs font-medium text-red-500 bg-red-50 rounded-lg border border-red-100">
+                    Action Required: Resubmit or Delete
+                </div>
+             ) : (
+                <div className="w-full py-1.5 text-center text-xs font-medium text-emerald-600 bg-emerald-50 rounded-lg border border-emerald-100">
+                    Task Completed
+                </div>
+             )
+          )
         )}
       </div>
     </div>
@@ -88,7 +163,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onMove, staff, onAssign }) =>
 };
 
 const Kanban: React.FC<KanbanProps> = ({ type }) => {
-  const { tasks, updateTask, addTask, properties, staff } = useData();
+  const { tasks, updateTask, addTask, properties, staff, currentUser } = useData();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [fileAttached, setFileAttached] = useState(false);
   const [newTask, setNewTask] = useState<Partial<Task>>({
@@ -97,11 +172,31 @@ const Kanban: React.FC<KanbanProps> = ({ type }) => {
     status: TaskStatus.OPEN
   });
   
+  // Access Control
+  const userRole = currentUser?.role || 'Cleaner';
+  const isManagerOrAdmin = ['Admin', 'Manager'].includes(userRole);
+  const canAssign = isManagerOrAdmin;
+  const canApprove = isManagerOrAdmin;
+
+  // Filtering Logic
+  const filteredTasks = tasks.filter(t => {
+      // Filter by board type if specified
+      if (type && t.type !== type) return false;
+      
+      // Filter by Access Control
+      if (!canAssign) {
+          // Cleaners/Maintenance can only see tasks assigned to them
+          // AND tasks they created (even if unassigned yet)
+          // Note: In a real app we'd check creatorId, here we assume if they are viewing it and it matches their ID it's theirs.
+          return t.assignee === currentUser?.id;
+      }
+      
+      return true;
+  });
+
   // Form styles
   const inputClass = "w-full bg-gray-50 border border-gray-200 text-slate-900 text-sm rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent block p-2.5 transition-all hover:bg-white";
   const labelClass = "block text-sm font-semibold text-slate-700 mb-1.5";
-
-  const filteredTasks = type ? tasks.filter(t => t.type === type) : tasks;
 
   const openTasks = filteredTasks.filter(t => t.status === TaskStatus.OPEN);
   const inProgressTasks = filteredTasks.filter(t => t.status === TaskStatus.IN_PROGRESS);
@@ -115,7 +210,15 @@ const Kanban: React.FC<KanbanProps> = ({ type }) => {
     }
   };
 
+  const handleApproveTask = (task: Task, approved: boolean) => {
+    updateTask({ 
+      ...task, 
+      approvalStatus: approved ? 'Approved' : 'Rejected' 
+    });
+  };
+
   const handleAssign = (taskId: string, staffId: string) => {
+      if (!canAssign) return; 
       const task = tasks.find(t => t.id === taskId);
       if (task) {
           updateTask({ ...task, assignee: staffId });
@@ -125,6 +228,12 @@ const Kanban: React.FC<KanbanProps> = ({ type }) => {
   const handleAddTask = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTask.title || !newTask.propertyId) return;
+
+    // Determine if task needs approval
+    // If Admin/Manager creates it -> Approved immediately
+    // If Cleaner/Maintenance creates it -> Pending
+    const initialApprovalStatus = isManagerOrAdmin ? 'Approved' : 'Pending';
+
     addTask({
         id: `t-${Date.now()}`,
         title: newTask.title!,
@@ -134,7 +243,8 @@ const Kanban: React.FC<KanbanProps> = ({ type }) => {
         status: TaskStatus.OPEN,
         propertyId: newTask.propertyId!,
         dueDate: newTask.dueDate || new Date().toISOString().split('T')[0],
-        assignee: newTask.assignee
+        assignee: canAssign ? newTask.assignee : currentUser?.id, // Self-assign if regular user
+        approvalStatus: initialApprovalStatus
     });
     setIsAddModalOpen(false);
     setFileAttached(false);
@@ -146,7 +256,7 @@ const Kanban: React.FC<KanbanProps> = ({ type }) => {
       if (newTask.type === 'Cleaning') return s.role === 'Cleaner';
       if (newTask.type === 'Maintenance') return s.role === 'Maintenance';
       return true; 
-  });
+  }).sort((a, b) => a.name.localeCompare(b.name));
 
   return (
     <div className="h-full flex flex-col">
@@ -163,38 +273,79 @@ const Kanban: React.FC<KanbanProps> = ({ type }) => {
             </button>
         </div>
         
-        <div className="flex space-x-6 overflow-x-auto pb-4 flex-1 min-h-[500px]">
-            {/* Columns */}
-            <div className="flex-1 min-w-[320px] bg-gray-50/50 rounded-2xl p-4 h-fit border border-gray-200/60">
-                <h3 className="font-bold text-slate-700 mb-4 flex items-center justify-between px-1">
-                To Do <span className="bg-slate-200 text-slate-700 text-xs font-bold px-2.5 py-0.5 rounded-full">{openTasks.length}</span>
-                </h3>
-                <div className="space-y-3 min-h-[100px]">
-                    {openTasks.map(task => <TaskCard key={task.id} task={task} onMove={advanceTask} staff={staff} onAssign={handleAssign} />)}
-                    {openTasks.length === 0 && <div className="text-center text-slate-400 text-sm py-8 italic">No open tasks</div>}
+        {filteredTasks.length === 0 && !canAssign ? (
+             <div className="flex-1 flex flex-col items-center justify-center text-slate-400 bg-gray-50 rounded-2xl border border-dashed border-gray-300 m-4">
+                 <CheckCircle size={48} className="mb-4 opacity-20" />
+                 <h3 className="text-lg font-medium text-slate-600">All Caught Up!</h3>
+                 <p>No tasks are currently assigned to you.</p>
+             </div>
+        ) : (
+            <div className="flex space-x-6 overflow-x-auto pb-4 flex-1 min-h-[500px]">
+                {/* Columns */}
+                <div className="flex-1 min-w-[320px] bg-gray-50/50 rounded-2xl p-4 h-fit border border-gray-200/60">
+                    <h3 className="font-bold text-slate-700 mb-4 flex items-center justify-between px-1">
+                    To Do <span className="bg-slate-200 text-slate-700 text-xs font-bold px-2.5 py-0.5 rounded-full">{openTasks.length}</span>
+                    </h3>
+                    <div className="space-y-3 min-h-[100px]">
+                        {openTasks.map(task => (
+                          <TaskCard 
+                            key={task.id} 
+                            task={task} 
+                            onMove={advanceTask} 
+                            onApprove={handleApproveTask}
+                            staff={staff} 
+                            onAssign={handleAssign} 
+                            canAssign={canAssign}
+                            canApprove={canApprove}
+                          />
+                        ))}
+                        {openTasks.length === 0 && <div className="text-center text-slate-400 text-sm py-8 italic">No open tasks</div>}
+                    </div>
                 </div>
-            </div>
 
-            <div className="flex-1 min-w-[320px] bg-gray-50/50 rounded-2xl p-4 h-fit border border-gray-200/60">
-                <h3 className="font-bold text-slate-700 mb-4 flex items-center justify-between px-1">
-                In Progress <span className="bg-blue-100 text-blue-700 text-xs font-bold px-2.5 py-0.5 rounded-full">{inProgressTasks.length}</span>
-                </h3>
-                <div className="space-y-3 min-h-[100px]">
-                    {inProgressTasks.map(task => <TaskCard key={task.id} task={task} onMove={advanceTask} staff={staff} onAssign={handleAssign} />)}
-                    {inProgressTasks.length === 0 && <div className="text-center text-slate-400 text-sm py-8 italic">No tasks in progress</div>}
+                <div className="flex-1 min-w-[320px] bg-gray-50/50 rounded-2xl p-4 h-fit border border-gray-200/60">
+                    <h3 className="font-bold text-slate-700 mb-4 flex items-center justify-between px-1">
+                    In Progress <span className="bg-blue-100 text-blue-700 text-xs font-bold px-2.5 py-0.5 rounded-full">{inProgressTasks.length}</span>
+                    </h3>
+                    <div className="space-y-3 min-h-[100px]">
+                        {inProgressTasks.map(task => (
+                          <TaskCard 
+                            key={task.id} 
+                            task={task} 
+                            onMove={advanceTask} 
+                            onApprove={handleApproveTask}
+                            staff={staff} 
+                            onAssign={handleAssign} 
+                            canAssign={canAssign} 
+                            canApprove={canApprove}
+                          />
+                        ))}
+                        {inProgressTasks.length === 0 && <div className="text-center text-slate-400 text-sm py-8 italic">No tasks in progress</div>}
+                    </div>
                 </div>
-            </div>
 
-            <div className="flex-1 min-w-[320px] bg-gray-50/50 rounded-2xl p-4 h-fit border border-gray-200/60">
-                <h3 className="font-bold text-slate-700 mb-4 flex items-center justify-between px-1">
-                Completed <span className="bg-emerald-100 text-emerald-700 text-xs font-bold px-2.5 py-0.5 rounded-full">{completedTasks.length}</span>
-                </h3>
-                <div className="space-y-3 min-h-[100px]">
-                    {completedTasks.map(task => <TaskCard key={task.id} task={task} onMove={advanceTask} staff={staff} onAssign={handleAssign} />)}
-                    {completedTasks.length === 0 && <div className="text-center text-slate-400 text-sm py-8 italic">No completed tasks yet</div>}
+                <div className="flex-1 min-w-[320px] bg-gray-50/50 rounded-2xl p-4 h-fit border border-gray-200/60">
+                    <h3 className="font-bold text-slate-700 mb-4 flex items-center justify-between px-1">
+                    Completed <span className="bg-emerald-100 text-emerald-700 text-xs font-bold px-2.5 py-0.5 rounded-full">{completedTasks.length}</span>
+                    </h3>
+                    <div className="space-y-3 min-h-[100px]">
+                        {completedTasks.map(task => (
+                          <TaskCard 
+                            key={task.id} 
+                            task={task} 
+                            onMove={advanceTask} 
+                            onApprove={handleApproveTask}
+                            staff={staff} 
+                            onAssign={handleAssign} 
+                            canAssign={canAssign} 
+                            canApprove={canApprove}
+                          />
+                        ))}
+                        {completedTasks.length === 0 && <div className="text-center text-slate-400 text-sm py-8 italic">No completed tasks yet</div>}
+                    </div>
                 </div>
             </div>
-        </div>
+        )}
 
         {/* Add Task Modal */}
         {isAddModalOpen && (
@@ -205,6 +356,13 @@ const Kanban: React.FC<KanbanProps> = ({ type }) => {
                         <button onClick={() => setIsAddModalOpen(false)} className="text-slate-400 hover:text-red-500 transition-colors p-1 rounded-full hover:bg-red-50"><X size={20} /></button>
                     </div>
                     <form onSubmit={handleAddTask} className="p-6 space-y-5">
+                        {!isManagerOrAdmin && (
+                          <div className="bg-amber-50 text-amber-800 text-xs p-3 rounded-lg flex items-start border border-amber-100">
+                             <ShieldCheck size={16} className="mr-2 flex-shrink-0" />
+                             <p>Your task will be sent to a manager for approval before you can start working on it.</p>
+                          </div>
+                        )}
+
                         <div>
                             <label className={labelClass}>Task Title</label>
                             <input 
@@ -269,24 +427,26 @@ const Kanban: React.FC<KanbanProps> = ({ type }) => {
                             </div>
                         </div>
 
-                        <div>
-                            <label className={labelClass}>Assign To</label>
-                            <div className="relative">
-                                <select 
-                                    className={`${inputClass} appearance-none`}
-                                    value={newTask.assignee || ''}
-                                    onChange={e => setNewTask({...newTask, assignee: e.target.value})}
-                                >
-                                    <option value="">Unassigned</option>
-                                    {eligibleStaff.map(s => (
-                                        <option key={s.id} value={s.id}>{s.name} ({s.role})</option>
-                                    ))}
-                                </select>
-                                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
-                                    <User size={16} />
+                        {canAssign && (
+                            <div>
+                                <label className={labelClass}>Assign To</label>
+                                <div className="relative">
+                                    <select 
+                                        className={`${inputClass} appearance-none`}
+                                        value={newTask.assignee || ''}
+                                        onChange={e => setNewTask({...newTask, assignee: e.target.value})}
+                                    >
+                                        <option value="">Unassigned</option>
+                                        {eligibleStaff.map(s => (
+                                            <option key={s.id} value={s.id}>{s.name} ({s.role})</option>
+                                        ))}
+                                    </select>
+                                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
+                                        <User size={16} />
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        )}
                         
                         <div>
                             <label className={labelClass}>Attachments</label>
@@ -323,7 +483,8 @@ const Kanban: React.FC<KanbanProps> = ({ type }) => {
                         
                         <div className="pt-2">
                             <button type="submit" className="w-full bg-indigo-600 text-white py-3 rounded-xl font-semibold hover:bg-indigo-700 transition-all hover:shadow-lg hover:shadow-indigo-200 flex justify-center items-center">
-                                <Save size={18} className="mr-2" /> Create Task
+                                <Save size={18} className="mr-2" /> 
+                                {isManagerOrAdmin ? 'Create Task' : 'Submit for Approval'}
                             </button>
                         </div>
                     </form>

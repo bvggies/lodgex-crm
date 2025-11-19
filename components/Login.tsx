@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useData } from '../DataContext';
-import { Lock, Mail, ArrowRight, Shield, User, Wrench, Brush } from 'lucide-react';
+import { Lock, Mail, ArrowRight, Shield, User, Wrench, Brush, Smile } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Logo from './Logo';
 
@@ -13,7 +13,7 @@ const Login: React.FC = () => {
   const { login } = useData();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [selectedRole, setSelectedRole] = useState<'Admin' | 'Manager' | 'Cleaner' | 'Maintenance' | 'Owner'>('Admin');
+  const [selectedRole, setSelectedRole] = useState<'Admin' | 'Manager' | 'Cleaner' | 'Maintenance' | 'Owner' | 'Guest'>('Admin');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = (e: React.FormEvent) => {
@@ -91,12 +91,13 @@ const Login: React.FC = () => {
           {/* Role Selector (Demo Feature) */}
           <div className="mb-8 p-4 bg-gray-50 rounded-2xl border border-gray-100">
             <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Select Demo Role</label>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-3 md:grid-cols-5 gap-2">
                 {[
                     { id: 'Admin', icon: Shield },
                     { id: 'Manager', icon: User },
                     { id: 'Cleaner', icon: Brush },
-                    { id: 'Maintenance', icon: Wrench }
+                    { id: 'Maintenance', icon: Wrench },
+                    { id: 'Guest', icon: Smile }
                 ].map((role) => (
                     <MotionButton
                         whileTap={{ scale: 0.95 }}

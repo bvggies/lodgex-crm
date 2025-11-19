@@ -18,6 +18,7 @@ import Integrations from './components/Integrations';
 import Archive from './components/Archive';
 import Templates from './components/Templates';
 import Login from './components/Login';
+import MyBookings from './components/MyBookings';
 import { DataProvider, useData } from './DataContext';
 import { AnimatePresence, motion } from 'framer-motion';
 
@@ -67,6 +68,7 @@ const AppContent: React.FC = () => {
   const renderContent = () => {
     switch (activePage) {
       case 'dashboard': return <Dashboard setPage={setActivePage} />;
+      case 'my-bookings': return <MyBookings />;
       case 'bookings': return <BookingsList />;
       case 'properties': return <Properties />;
       case 'guests': return <Guests />;

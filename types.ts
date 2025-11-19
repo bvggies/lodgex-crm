@@ -39,7 +39,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  role: 'Admin' | 'Manager' | 'Cleaner' | 'Maintenance' | 'Owner';
+  role: 'Admin' | 'Manager' | 'Cleaner' | 'Maintenance' | 'Owner' | 'Guest';
   avatarUrl?: string;
 }
 
@@ -134,6 +134,7 @@ export interface Task {
   propertyId: string;
   dueDate: string;
   description?: string;
+  approvalStatus?: 'Pending' | 'Approved' | 'Rejected';
 }
 
 export interface FinanceRecord {

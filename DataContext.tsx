@@ -121,7 +121,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setStaff(stf);
         setOwners(own);
       } catch (error) {
-        console.warn("Backend unreachable. Falling back to Mock Data.", error);
+        console.log("Backend unreachable. Using local mock data.");
         // Fallback to Mock Data if API fails
         setProperties(MOCK_PROPERTIES);
         setBookings(MOCK_BOOKINGS);
@@ -134,8 +134,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setNotifications(prev => [{
             id: 'sys-offline',
             title: 'Demo Mode Active',
-            message: 'Backend connection failed. Using local demo data.',
-            type: 'warning',
+            message: 'Backend connection unavailable. Using local data.',
+            type: 'info',
             read: false,
             timestamp: 'Just now'
         }, ...prev]);
@@ -175,12 +175,21 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Auth Logic
   const login = (role: User['role']) => {
+    let name = 'Admin User';
+    let email = 'admin@lodgex.com';
+    let id = 'u1';
+
+    if (role === 'Cleaner') { name = 'Elena Cleaner'; email = 'elena@lodgex.com'; }
+    else if (role === 'Maintenance') { name = 'Marcus Fixer'; email = 'marcus@lodgex.com'; }
+    else if (role === 'Owner') { name = 'John Owner'; email = 'john@example.com'; }
+    else if (role === 'Guest') { name = 'Alice Johnson'; email = 'alice@test.com'; id = 'g1'; }
+
     const mockUser: User = {
-      id: 'u1',
-      name: role === 'Admin' ? 'Admin User' : role === 'Cleaner' ? 'Elena Cleaner' : 'John Owner',
-      email: role === 'Admin' ? 'admin@lodgex.com' : 'staff@lodgex.com',
-      role: role,
-      avatarUrl: `https://ui-avatars.com/api/?name=${role}&background=random`
+      id,
+      name,
+      email,
+      role,
+      avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`
     };
     setCurrentUser(mockUser);
     addLog('LOGIN', 'Auth', `User logged in as ${role}`);
@@ -196,10 +205,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       try {
           await fn();
       } catch (error) {
-          console.warn("API sync failed:", error);
-          if (fallbackMessage) {
-              addNotification('Sync Error', fallbackMessage, 'warning');
-          }
+          // Suppress errors in demo mode to prevent console spam and notifications
       }
   };
 

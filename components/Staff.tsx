@@ -4,13 +4,13 @@ import { useData } from '../DataContext';
 import { 
   Mail, Phone, Shield, Briefcase, MoreVertical, Plus, X, Save, 
   Trash2, CheckCircle, Clock, AlertCircle, Calendar, FileText, 
-  Download, Upload, User, Filter, Search, Check, Flag
+  Download, Upload, User, Filter, Search, Check, Flag, History
 } from 'lucide-react';
 import { StaffMember, Task, TaskStatus, StaffDocument } from '../types';
 import { storageService } from '../services/storageService';
 
 const Staff: React.FC = () => {
-  const { staff, addStaff, updateStaff, tasks } = useData();
+  const { staff, addStaff, updateStaff, tasks, auditLogs } = useData();
   const [filterRole, setFilterRole] = useState<string>('All');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<StaffMember | null>(null);
@@ -130,6 +130,12 @@ const Staff: React.FC = () => {
         return matchesStatus && matchesPriority && matchesSearch;
     });
 
+    // History logs for this staff member
+    const historyLogs = auditLogs.filter(l => 
+        l.entity === 'Task' && 
+        (l.user === member.name || l.details.toLowerCase().includes(member.name.toLowerCase()))
+    ).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
     return (
       <div className="space-y-4 animate-in fade-in duration-300 h-full flex flex-col">
          <div className="flex flex-col md:flex-row gap-3">
@@ -173,47 +179,80 @@ const Staff: React.FC = () => {
              </div>
          </div>
 
-         <div className="flex-1 overflow-y-auto pr-1 space-y-3 max-h-[400px]">
-             {filtered.length === 0 ? (
-                 <div className="text-center py-12 text-slate-400 bg-gray-50 rounded-xl border border-dashed border-gray-200">
-                    <CheckCircle size={32} className="mx-auto mb-2 opacity-50" />
-                    No tasks found matching your filters.
-                 </div>
-             ) : (
-                 filtered.map(task => (
-                    <div key={task.id} className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
-                        <div className="flex justify-between items-start mb-1">
-                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                                task.type === 'Cleaning' ? 'bg-blue-50 text-blue-700' : 'bg-orange-50 text-orange-700'
-                            }`}>
-                                {task.type}
-                            </span>
-                            <span className={`px-2 py-0.5 rounded border text-[10px] font-bold ${
-                                task.priority === 'High' ? 'bg-red-50 text-red-700 border-red-100' : 
-                                task.priority === 'Medium' ? 'bg-amber-50 text-amber-700 border-amber-100' : 
-                                'bg-emerald-50 text-emerald-700 border-emerald-100'
-                            }`}>
-                                {task.priority}
-                            </span>
-                        </div>
-                        <h4 className="font-bold text-slate-800 text-sm mb-1">{task.title}</h4>
-                        <p className="text-xs text-slate-500 line-clamp-2 mb-3">{task.description}</p>
-                        
-                        <div className="flex items-center justify-between pt-3 border-t border-gray-50">
-                            <div className="flex items-center text-xs text-slate-500 font-medium">
-                                <Calendar size={12} className="mr-1.5" /> Due: {task.dueDate}
+         <div className="flex-1 overflow-y-auto pr-1 space-y-6 max-h-[500px]">
+             {/* Active Tasks Section */}
+             <div>
+                 <h5 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 sticky top-0 bg-white z-10 py-1">Assigned Tasks</h5>
+                 {filtered.length === 0 ? (
+                     <div className="text-center py-8 text-slate-400 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                        <CheckCircle size={24} className="mx-auto mb-2 opacity-50" />
+                        No tasks found.
+                     </div>
+                 ) : (
+                     <div className="space-y-3">
+                         {filtered.map(task => (
+                            <div key={task.id} className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+                                <div className="flex justify-between items-start mb-1">
+                                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                                        task.type === 'Cleaning' ? 'bg-blue-50 text-blue-700' : 'bg-orange-50 text-orange-700'
+                                    }`}>
+                                        {task.type}
+                                    </span>
+                                    <span className={`px-2 py-0.5 rounded border text-[10px] font-bold ${
+                                        task.priority === 'High' ? 'bg-red-50 text-red-700 border-red-100' : 
+                                        task.priority === 'Medium' ? 'bg-amber-50 text-amber-700 border-amber-100' : 
+                                        'bg-emerald-50 text-emerald-700 border-emerald-100'
+                                    }`}>
+                                        {task.priority}
+                                    </span>
+                                </div>
+                                <h4 className="font-bold text-slate-800 text-sm mb-1">{task.title}</h4>
+                                <p className="text-xs text-slate-500 line-clamp-2 mb-3">{task.description}</p>
+                                
+                                <div className="flex items-center justify-between pt-3 border-t border-gray-50">
+                                    <div className="flex items-center text-xs text-slate-500 font-medium">
+                                        <Calendar size={12} className="mr-1.5" /> Due: {task.dueDate}
+                                    </div>
+                                    <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
+                                        task.status === TaskStatus.COMPLETED ? 'bg-green-100 text-green-700' :
+                                        task.status === TaskStatus.IN_PROGRESS ? 'bg-blue-100 text-blue-700' :
+                                        'bg-gray-100 text-gray-600'
+                                    }`}>
+                                        {task.status}
+                                    </span>
+                                </div>
                             </div>
-                            <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
-                                task.status === TaskStatus.COMPLETED ? 'bg-green-100 text-green-700' :
-                                task.status === TaskStatus.IN_PROGRESS ? 'bg-blue-100 text-blue-700' :
-                                'bg-gray-100 text-gray-600'
-                            }`}>
-                                {task.status}
-                            </span>
-                        </div>
-                    </div>
-                 ))
-             )}
+                         ))}
+                     </div>
+                 )}
+             </div>
+
+             {/* Task History Subsection */}
+             <div className="pt-6 border-t border-gray-100">
+                 <h5 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center">
+                     <History size={14} className="mr-2" /> Task Assignment History
+                 </h5>
+                 <div className="relative pl-4 border-l border-gray-200 space-y-6">
+                     {historyLogs.length === 0 ? (
+                         <p className="text-sm text-slate-400 italic pl-2">No history recorded yet.</p>
+                     ) : (
+                         historyLogs.map(log => (
+                             <div key={log.id} className="relative">
+                                 <div className="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-indigo-200 border-2 border-white shadow-sm"></div>
+                                 <div className="pl-2">
+                                     <p className="text-xs text-slate-400 mb-0.5">{log.timestamp}</p>
+                                     <p className="text-sm text-slate-700">
+                                         <span className="font-bold text-indigo-600">{log.user}</span> {log.action === 'UPDATE' ? 'updated' : log.action === 'CREATE' ? 'created' : 'modified'} task:
+                                     </p>
+                                     <p className="text-sm text-slate-600 bg-gray-50 p-2 rounded-lg mt-1 border border-gray-100">
+                                         {log.details}
+                                     </p>
+                                 </div>
+                             </div>
+                         ))
+                     )}
+                 </div>
+             </div>
          </div>
       </div>
     );

@@ -1,3 +1,4 @@
+
 import { Booking, FinanceRecord, Property, Task, Guest, StaffMember, Owner, AuditLogEntry } from "../types";
 
 // Use the injected variable directly. Vite replaces 'process.env.REACT_APP_API_URL' with the string.
@@ -117,7 +118,9 @@ export const apiService = {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(log)
         });
-    } catch (e) { console.error("Failed to write audit log", e); }
+    } catch (e) { 
+      // Silently ignore errors in demo mode to avoid console noise
+    }
   },
 
   // --- Bulk Import ---

@@ -6,7 +6,7 @@ import {
 } from 'recharts';
 import { 
   ArrowUpRight, ArrowDownRight, DollarSign, Calendar, AlertCircle, 
-  Wand2, Plus, Users, CheckCircle2, Clock, Briefcase
+  Wand2, Plus, Users, CheckCircle2, Clock, Briefcase, Wifi, MapPin, MessageSquare
 } from 'lucide-react';
 import { REVENUE_DATA } from '../constants';
 import { generateInsight } from '../services/geminiService';
@@ -63,6 +63,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setPage }) => {
 
   // Determine view permissions
   const isStaff = currentUser?.role === 'Cleaner' || currentUser?.role === 'Maintenance';
+  const isGuest = currentUser?.role === 'Guest';
 
   // --- Real-time Data Aggregation ---
 
@@ -107,7 +108,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setPage }) => {
 
   useEffect(() => {
     const fetchInsight = async () => {
-      if (isStaff) return; // Don't fetch business insights for staff
+      if (isStaff || isGuest) return; // Don't fetch business insights for staff or guests
       setLoadingInsight(true);
       try {
         const text = await generateInsight('Weekly Business Overview', bookings);
@@ -119,7 +120,114 @@ const Dashboard: React.FC<DashboardProps> = ({ setPage }) => {
       }
     };
     if (bookings.length > 0) fetchInsight();
-  }, [bookings, isStaff]);
+  }, [bookings, isStaff, isGuest]);
+
+  // --- GUEST VIEW ---
+  if (isGuest) {
+      const myBookings = bookings.filter(b => b.guestId === currentUser?.id || b.guestName === currentUser?.name);
+      const upcoming = myBookings.sort((a, b) => new Date(a.checkIn).getTime() - new Date(b.checkIn).getTime())[0];
+      
+      return (
+          <MotionDiv variants={container} initial="hidden" animate="show" className="space-y-8 pb-10">
+               {/* Welcome Header */}
+               <div className="bg-gradient-to-r from-indigo-600 to-violet-600 rounded-2xl p-8 text-white shadow-lg">
+                   <h1 className="text-3xl font-bold mb-2">Welcome, {currentUser?.name}!</h1>
+                   <p className="text-indigo-100">We are delighted to have you with us.</p>
+               </div>
+
+               {upcoming ? (
+                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                       {/* Current Trip Card */}
+                       <MotionDiv variants={item} className="lg:col-span-2 bg-white rounded-2xl overflow-hidden border border-gray-200 shadow-sm">
+                           <div className="h-48 bg-gray-200 relative">
+                               <img src={`https://picsum.photos/seed/${upcoming.propertyId}/800/400`} alt="Property" className="w-full h-full object-cover" />
+                               <div className="absolute inset-0 bg-black/30 flex items-end p-6">
+                                   <h2 className="text-2xl font-bold text-white">{upcoming.propertyName}</h2>
+                               </div>
+                           </div>
+                           <div className="p-6">
+                               <div className="flex justify-between items-center mb-6">
+                                   <div>
+                                       <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Check In</p>
+                                       <p className="text-lg font-bold text-slate-800">{upcoming.checkIn}</p>
+                                       <p className="text-sm text-slate-500">3:00 PM</p>
+                                   </div>
+                                   <div className="h-10 w-px bg-gray-200"></div>
+                                   <div className="text-right">
+                                       <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Check Out</p>
+                                       <p className="text-lg font-bold text-slate-800">{upcoming.checkOut}</p>
+                                       <p className="text-sm text-slate-500">11:00 AM</p>
+                                   </div>
+                               </div>
+                               
+                               <div className="grid grid-cols-2 gap-4">
+                                   <div className="p-4 bg-indigo-50 rounded-xl border border-indigo-100">
+                                       <div className="flex items-center text-indigo-600 mb-2">
+                                           <Wifi size={20} className="mr-2" />
+                                           <span className="font-bold">WiFi</span>
+                                       </div>
+                                       <p className="text-sm font-mono text-slate-700">Network: Lodgex_Guest</p>
+                                       <p className="text-sm font-mono text-slate-700">Pass: welcome2023</p>
+                                   </div>
+                                   <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-100">
+                                       <div className="flex items-center text-emerald-600 mb-2">
+                                           <MapPin size={20} className="mr-2" />
+                                           <span className="font-bold">Location</span>
+                                       </div>
+                                       <p className="text-sm text-slate-700">123 Main St, Downtown</p>
+                                       <a href="#" className="text-xs text-emerald-600 font-bold hover:underline">Get Directions</a>
+                                   </div>
+                               </div>
+                           </div>
+                       </MotionDiv>
+
+                       {/* Quick Actions */}
+                       <div className="space-y-6">
+                           <MotionDiv variants={item} className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+                               <h3 className="font-bold text-slate-800 mb-4">Quick Actions</h3>
+                               <div className="space-y-3">
+                                   <button className="w-full p-3 flex items-center justify-between bg-gray-50 hover:bg-indigo-50 text-slate-700 hover:text-indigo-600 rounded-xl transition-colors">
+                                       <span className="flex items-center"><MessageSquare size={18} className="mr-3"/> Message Host</span>
+                                   </button>
+                                   <button className="w-full p-3 flex items-center justify-between bg-gray-50 hover:bg-indigo-50 text-slate-700 hover:text-indigo-600 rounded-xl transition-colors">
+                                       <span className="flex items-center"><Briefcase size={18} className="mr-3"/> House Guide</span>
+                                   </button>
+                                   <button 
+                                       onClick={() => setPage('my-bookings')}
+                                       className="w-full p-3 flex items-center justify-between bg-gray-50 hover:bg-indigo-50 text-slate-700 hover:text-indigo-600 rounded-xl transition-colors"
+                                   >
+                                       <span className="flex items-center"><Calendar size={18} className="mr-3"/> All Bookings</span>
+                                   </button>
+                               </div>
+                           </MotionDiv>
+                           
+                           <MotionDiv variants={item} className="bg-indigo-600 p-6 rounded-2xl text-white shadow-md">
+                               <h3 className="font-bold text-lg mb-2">Enjoy your stay?</h3>
+                               <p className="text-indigo-100 text-sm mb-4">Extend your trip or book your next getaway with us for a discount.</p>
+                               <button 
+                                   onClick={() => setPage('my-bookings')}
+                                   className="w-full py-2 bg-white text-indigo-600 font-bold rounded-lg text-sm hover:bg-indigo-50 hover:text-indigo-700 transition-colors"
+                               >
+                                   Book Again
+                               </button>
+                           </MotionDiv>
+                       </div>
+                   </div>
+               ) : (
+                   <div className="text-center py-20 bg-white rounded-2xl border border-gray-200">
+                       <h2 className="text-xl font-bold text-slate-800 mb-2">No upcoming trips</h2>
+                       <p className="text-slate-500 mb-6">Ready to plan your next adventure?</p>
+                       <button 
+                           onClick={() => setPage('my-bookings')}
+                           className="px-6 py-2 bg-indigo-600 text-white font-bold rounded-lg text-sm hover:bg-indigo-700 transition-colors"
+                       >
+                           View Past Bookings
+                       </button>
+                   </div>
+               )}
+          </MotionDiv>
+      );
+  }
 
   // --- STAFF VIEW ---
   if (isStaff) {

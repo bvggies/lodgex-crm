@@ -31,7 +31,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage, setPage }) => {
   const { currentUser, logout } = useData();
 
   const navItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['Admin', 'Manager', 'Owner'] },
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['Admin', 'Manager', 'Owner', 'Guest'] },
+    { id: 'my-bookings', label: 'My Bookings', icon: CalendarDays, roles: ['Guest'] },
     { id: 'properties', label: 'Properties', icon: Building2, roles: ['Admin', 'Manager', 'Owner'] },
     { id: 'bookings', label: 'Bookings', icon: CalendarDays, roles: ['Admin', 'Manager'] },
     { id: 'guests', label: 'Guests', icon: Users, roles: ['Admin', 'Manager'] },
@@ -46,7 +47,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage, setPage }) => {
     { id: 'automations', label: 'Automations', icon: Zap, roles: ['Admin'] },
     { id: 'audit', label: 'Audit Log', icon: FileText, roles: ['Admin'] },
     { id: 'archive', label: 'Archive', icon: Archive, roles: ['Admin'] },
-    { id: 'settings', label: 'Settings', icon: Settings, roles: ['Admin', 'Manager', 'Cleaner', 'Maintenance', 'Owner'] },
+    { id: 'settings', label: 'Settings', icon: Settings, roles: ['Admin', 'Manager', 'Cleaner', 'Maintenance', 'Owner', 'Guest'] },
   ];
 
   // Filter items based on user role (Mock RBAC)

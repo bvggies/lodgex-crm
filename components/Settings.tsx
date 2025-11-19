@@ -6,7 +6,7 @@ import { BookingStatus, PaymentStatus, Channel, Booking, FinanceRecord } from '.
 import * as XLSX from 'xlsx';
 
 const Settings: React.FC = () => {
-  const { importData, properties } = useData();
+  const { importData, properties, currentUser } = useData();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [importStats, setImportStats] = useState<{ bookings: number, finance: number } | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
@@ -149,11 +149,11 @@ const Settings: React.FC = () => {
         <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
           <div>
             <label className={labelClass}>Full Name</label>
-            <input type="text" defaultValue="Admin User" className={inputClass} />
+            <input type="text" defaultValue={currentUser?.name} className={inputClass} />
           </div>
           <div>
             <label className={labelClass}>Email Address</label>
-            <input type="email" defaultValue="admin@lodgex.com" className={inputClass} />
+            <input type="email" defaultValue={currentUser?.email} className={inputClass} />
           </div>
           <div>
             <label className={labelClass}>Phone Number</label>
@@ -161,7 +161,7 @@ const Settings: React.FC = () => {
           </div>
           <div>
             <label className={labelClass}>Role</label>
-            <input type="text" defaultValue="Administrator" disabled className={`${inputClass} opacity-70 cursor-not-allowed`} />
+            <input type="text" defaultValue={currentUser?.role} disabled className={`${inputClass} opacity-70 cursor-not-allowed`} />
           </div>
         </div>
       </div>
@@ -202,84 +202,86 @@ const Settings: React.FC = () => {
         </div>
       </div>
 
-      {/* Data Import / Export */}
-      <div className={sectionClass}>
-        <div className="p-6 border-b border-gray-100 flex items-center gap-4 bg-gradient-to-r from-blue-50 to-white">
-           <div className="p-3 bg-white text-blue-600 rounded-xl shadow-sm border border-blue-100">
-             <Database size={24} />
-           </div>
-           <div>
-             <h3 className="text-lg font-bold text-slate-800">Data Import / Export</h3>
-             <p className="text-sm text-slate-500">Bulk upload historical data or download backups</p>
-           </div>
-        </div>
-        <div className="p-8 space-y-6">
-            <div className="flex flex-col md:flex-row gap-6 items-start">
-                <div className="flex-1 space-y-2">
-                    <h4 className="font-bold text-slate-800 flex items-center"><FileSpreadsheet size={16} className="mr-2 text-green-600"/> Import Historical Data</h4>
-                    <p className="text-sm text-slate-500">Upload previous years' bookings and financial records using our Excel template.</p>
-                    
-                    <div className="flex flex-wrap gap-3 mt-4">
-                        <button 
-                            onClick={handleDownloadTemplate}
-                            className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-gray-50 hover:text-slate-800 transition-colors flex items-center"
-                        >
-                            <Download size={16} className="mr-2" /> Download Template
-                        </button>
-                        
-                        <div className="relative">
-                            <input 
-                                type="file" 
-                                ref={fileInputRef}
-                                onChange={handleFileUpload}
-                                accept=".xlsx, .xls"
-                                className="hidden"
-                            />
-                            <button 
-                                onClick={() => fileInputRef.current?.click()}
-                                disabled={isProcessing}
-                                className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors flex items-center disabled:opacity-50"
-                            >
-                                {isProcessing ? (
-                                    <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
-                                ) : (
-                                    <Upload size={16} className="mr-2" />
-                                )}
-                                {isProcessing ? 'Processing...' : 'Upload Excel'}
-                            </button>
-                        </div>
-                    </div>
+      {/* Data Import / Export - Admin Only */}
+      {currentUser?.role === 'Admin' && (
+        <div className={sectionClass}>
+          <div className="p-6 border-b border-gray-100 flex items-center gap-4 bg-gradient-to-r from-blue-50 to-white">
+             <div className="p-3 bg-white text-blue-600 rounded-xl shadow-sm border border-blue-100">
+               <Database size={24} />
+             </div>
+             <div>
+               <h3 className="text-lg font-bold text-slate-800">Data Import / Export</h3>
+               <p className="text-sm text-slate-500">Bulk upload historical data or download backups</p>
+             </div>
+          </div>
+          <div className="p-8 space-y-6">
+              <div className="flex flex-col md:flex-row gap-6 items-start">
+                  <div className="flex-1 space-y-2">
+                      <h4 className="font-bold text-slate-800 flex items-center"><FileSpreadsheet size={16} className="mr-2 text-green-600"/> Import Historical Data</h4>
+                      <p className="text-sm text-slate-500">Upload previous years' bookings and financial records using our Excel template.</p>
+                      
+                      <div className="flex flex-wrap gap-3 mt-4">
+                          <button 
+                              onClick={handleDownloadTemplate}
+                              className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-gray-50 hover:text-slate-800 transition-colors flex items-center"
+                          >
+                              <Download size={16} className="mr-2" /> Download Template
+                          </button>
+                          
+                          <div className="relative">
+                              <input 
+                                  type="file" 
+                                  ref={fileInputRef}
+                                  onChange={handleFileUpload}
+                                  accept=".xlsx, .xls"
+                                  className="hidden"
+                              />
+                              <button 
+                                  onClick={() => fileInputRef.current?.click()}
+                                  disabled={isProcessing}
+                                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors flex items-center disabled:opacity-50"
+                              >
+                                  {isProcessing ? (
+                                      <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+                                  ) : (
+                                      <Upload size={16} className="mr-2" />
+                                  )}
+                                  {isProcessing ? 'Processing...' : 'Upload Excel'}
+                              </button>
+                          </div>
+                      </div>
 
-                    {/* Status Messages */}
-                    {importStats && (
-                        <div className="mt-4 p-3 bg-green-50 border border-green-100 rounded-lg text-sm text-green-700 flex items-start">
-                            <div className="mr-2 mt-0.5"><Database size={14} /></div>
-                            <div>
-                                <p className="font-bold">Success!</p>
-                                <p>Imported {importStats.bookings} bookings and {importStats.finance} finance records.</p>
-                            </div>
-                        </div>
-                    )}
-                    {importError && (
-                        <div className="mt-4 p-3 bg-red-50 border border-red-100 rounded-lg text-sm text-red-700 flex items-start">
-                            <AlertCircle size={16} className="mr-2 mt-0.5 flex-shrink-0" />
-                            {importError}
-                        </div>
-                    )}
-                </div>
-                
-                <div className="w-full md:w-px h-px md:h-32 bg-gray-100"></div>
+                      {/* Status Messages */}
+                      {importStats && (
+                          <div className="mt-4 p-3 bg-green-50 border border-green-100 rounded-lg text-sm text-green-700 flex items-start">
+                              <div className="mr-2 mt-0.5"><Database size={14} /></div>
+                              <div>
+                                  <p className="font-bold">Success!</p>
+                                  <p>Imported {importStats.bookings} bookings and {importStats.finance} finance records.</p>
+                              </div>
+                          </div>
+                      )}
+                      {importError && (
+                          <div className="mt-4 p-3 bg-red-50 border border-red-100 rounded-lg text-sm text-red-700 flex items-start">
+                              <AlertCircle size={16} className="mr-2 mt-0.5 flex-shrink-0" />
+                              {importError}
+                          </div>
+                      )}
+                  </div>
+                  
+                  <div className="w-full md:w-px h-px md:h-32 bg-gray-100"></div>
 
-                <div className="flex-1 space-y-2">
-                    <h4 className="font-bold text-slate-800 flex items-center"><Download size={16} className="mr-2 text-indigo-600"/> Data Backup</h4>
-                    <p className="text-sm text-slate-500">Download a complete snapshot of your current system data.</p>
-                    <button className="mt-4 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-gray-50 transition-colors flex items-center">
-                        <Download size={16} className="mr-2" /> Export All Data
-                    </button>
-                </div>
-            </div>
+                  <div className="flex-1 space-y-2">
+                      <h4 className="font-bold text-slate-800 flex items-center"><Download size={16} className="mr-2 text-indigo-600"/> Data Backup</h4>
+                      <p className="text-sm text-slate-500">Download a complete snapshot of your current system data.</p>
+                      <button className="mt-4 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-gray-50 transition-colors flex items-center">
+                          <Download size={16} className="mr-2" /> Export All Data
+                      </button>
+                  </div>
+              </div>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Notifications (Existing Section) */}
       <div className={sectionClass}>
@@ -316,3 +318,4 @@ const Settings: React.FC = () => {
 };
 
 export default Settings;
+    
